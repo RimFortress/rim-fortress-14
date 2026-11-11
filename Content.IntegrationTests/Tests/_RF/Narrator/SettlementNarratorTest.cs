@@ -231,7 +231,7 @@ public sealed class SettlementNarratorTest : GameTest
 
             away = settlements.Single(x => x.Owner != home.Owner);
             Assert.That(away.Comp!.ResidentCount, Is.EqualTo(1), "a settlement of one");
-            Assert.That(home.Comp.ResidentCount, Is.EqualTo(2));
+            Assert.That(home.Comp!.ResidentCount, Is.EqualTo(2));
 
             Assert.That(_ownership.HasOwner(_pops[2], away!.Owner), Is.True, "it is owned by its own settlement");
             Assert.That(_ownership.HasOwner(_pops[2], home.Owner), Is.False);
