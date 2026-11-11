@@ -2,6 +2,7 @@ using Content.Server.Chat.Managers;
 using Content.Server.Ghost;
 using Content.Server.Mind;
 using Content.Shared._RF.NPC.Executable.Components;
+using Content.Shared._RF.World;
 using Content.Shared._RF.World.Components;
 using Content.Shared.Mobs;
 using Content.Shared.Mobs.Systems;
@@ -11,11 +12,12 @@ using Robust.Shared.Player;
 namespace Content.Server._RF.World;
 
 /// <summary>
-/// A player that has lost all of the pops that are alive is defeated: it is thrown out into the ghosts, and the server tells everybody
-/// about it in the chat. It is the way to lose in the game. It is looked into when something happens to a pop of the player (it dies or is
-/// gone), and when the player comes back to the game, and not all the time.
+/// A player that has lost all of the pops that are alive is defeated: it is thrown out into the ghosts,
+/// and the server tells everybody about it in the chat. It is the way to lose in the game.
+/// It is looked into when something happens to a pop of the player (it dies or is gone),
+/// when the pops of the player change, and when the player comes back to the game, and not all the time.
 /// </summary>
-public sealed class PlayerDefeatSystem : EntitySystem
+public sealed partial class PlayerDefeatSystem : EntitySystem
 {
     [Dependency] private IPlayerManager _player = null!;
     [Dependency] private IChatManager _chat = null!;
@@ -23,22 +25,19 @@ public sealed class PlayerDefeatSystem : EntitySystem
     [Dependency] private MindSystem _mind = null!;
     [Dependency] private GhostSystem _ghost = null!;
 
-    public override void Initialize()
-    {
-        SubscribeLocalEvent<ControllableNpcComponent, MobStateChangedEvent>(OnPopMobStateChanged);
-        SubscribeLocalEvent<ControllableNpcComponent, EntityTerminatingEvent>(OnPopTerminating);
-        SubscribeLocalEvent<RimFortressPlayerComponent, PlayerAttachedEvent>(OnPlayerAttached);
-    }
-
+    [SubscribeLocalEvent]
     private void OnPopMobStateChanged(Entity<ControllableNpcComponent> ent, ref MobStateChangedEvent args)
         => CheckControllers(ent.Comp);
 
+    [SubscribeLocalEvent]
     private void OnPopTerminating(Entity<ControllableNpcComponent> ent, ref EntityTerminatingEvent args)
         => CheckControllers(ent.Comp);
 
-    // A player that could not be defeated when it lost its pops (it was not in the game) is defeated when it is back.
-    private void OnPlayerAttached(Entity<RimFortressPlayerComponent> ent, ref PlayerAttachedEvent args)
-        => Check(ent);
+    [SubscribeLocalEvent]
+    private void OnPopsRemoved(Entity<RimFortressPlayerComponent> ent, ref PopRemovedEvent args) => Check(ent);
+
+    [SubscribeLocalEvent]
+    private void OnPlayerAttached(Entity<RimFortressPlayerComponent> ent, ref PlayerAttachedEvent args) => Check(ent);
 
     private void CheckControllers(ControllableNpcComponent pop)
     {
@@ -65,7 +64,9 @@ public sealed class PlayerDefeatSystem : EntitySystem
 
         player.Comp.Defeated = true;
 
-        _chat.DispatchServerAnnouncement(Loc.GetString("rf-player-defeated-announcement", ("name", session.Name)), Color.Red);
+        _chat.DispatchServerAnnouncement(
+            Loc.GetString("rf-player-defeated-announcement", ("name", session.Name)),
+            Color.Red);
         _ghost.OnGhostAttempt(mindId, false, forced: true, mind: mind);
     }
 

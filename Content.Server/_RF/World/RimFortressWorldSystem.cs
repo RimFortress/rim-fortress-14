@@ -3,7 +3,6 @@ using System.Numerics;
 using Content.Server._RF.Equipment;
 using Content.Server._RF.NPC.Executable.Systems;
 using Content.Server._RF.Parallax.Fog;
-using Content.Server.Administration.Managers;
 using Content.Server.Mind;
 using Content.Server.Parallax;
 using Content.Server.Preferences.Managers;
@@ -13,7 +12,6 @@ using Content.Shared._RF.World;
 using Content.Shared._RF.CCVar;
 using Content.Shared._RF.Parallax.Fog;
 using Content.Shared._RF.World.Components;
-using Content.Shared.Administration;
 using Content.Shared.Light.Components;
 using Content.Shared.Pinpointer;
 using Robust.Server.GameObjects;
@@ -32,7 +30,6 @@ namespace Content.Server._RF.World;
 /// </summary>
 public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSystem
 {
-    [Dependency] private IAdminManager _admin = null!;
     [Dependency] private MindSystem _mind = null!;
     [Dependency] private BiomeSystem _biome = null!;
     [Dependency] private MapSystem _map = null!;
@@ -121,6 +118,11 @@ public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSyste
         player.Comp.Pops.AddRange(pops);
         Dirty(player);
         Settlements.MarkDirty(player);
+
+        foreach (var pop in pops)
+        {
+            RaiseLocalEvent(player.Owner, new PopAddedEvent(pop));
+        }
     }
 
     /// <summary>
@@ -142,6 +144,7 @@ public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSyste
         player.Comp.Pops.Add(pop);
         Dirty(player);
         Settlements.MarkDirty(player);
+        RaiseLocalEvent(player.Owner, new PopAddedEvent(pop));
     }
 
     /// <summary>
@@ -168,6 +171,7 @@ public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSyste
 
         Dirty(player);
         Settlements.MarkDirty(player);
+        RaiseLocalEvent(player.Owner, new PopRemovedEvent(pop));
         return true;
     }
 
