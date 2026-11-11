@@ -9,14 +9,13 @@ namespace Content.Server._RF.GameTicking.Rules;
 public sealed partial class GlobalWorldRuleSystem : GameRuleSystem<GlobalWorldRuleComponent>
 {
     [Dependency] private NarratorSystem _narrator = default!;
-    [Dependency] private RimFortressRuleSystem _rule = default!;
     [Dependency] private IGameTiming _timing = default!;
 
     protected override void Started(EntityUid uid, GlobalWorldRuleComponent component, GameRuleComponent gameRule, GameRuleStartedEvent args)
     {
         base.Started(uid, component, gameRule, args);
 
-        if (_rule.GetRule() is not { } rule)
+        if (component.Narrator is not { } narrator || !TryComp(narrator, out NarratorRuleComponent? rule))
             return;
 
         var points = _narrator.GlobalEventPoints(rule);

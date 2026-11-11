@@ -1,0 +1,60 @@
+- type: !PartialOnly entity
+  id: BaseCurtains
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: HospitalCurtainsOpen
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: CurtainsBlackOpen
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: CurtainsBlueOpen
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: CurtainsSkyBlueOpen
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: CurtainsCyanOpen
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: CurtainsGreenOpen
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: CurtainsOrangeOpen
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: CurtainsPinkOpen
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: CurtainsPurpleOpen
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: CurtainsRedOpen
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: CurtainsWhiteOpen
+  components:
+  - type: PathTags
+    tags: [Door]

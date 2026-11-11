@@ -1,0 +1,5 @@
+- type: !PartialOnly entity
+  id: HighSecDoor
+  components:
+  - type: PathTags
+    tags: [Door]

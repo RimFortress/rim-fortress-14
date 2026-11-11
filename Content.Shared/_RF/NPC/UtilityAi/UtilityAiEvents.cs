@@ -38,6 +38,16 @@ public record struct BeforeUtilityAiGoalFinished(
     bool Handled);
 
 /// <summary>
+/// An event raised when a goal is put aside for another one, to find out which keys of the state belong to the goal. They
+/// are kept and put back when the goal goes on, so the other goal can use them as it likes.
+/// The keys that the goal lists as its temporary keys are among them already.
+/// </summary>
+/// <param name="Goal">The goal that is put aside.</param>
+/// <param name="Keys">The keys of the state to keep, subscribers add theirs.</param>
+[PublicAPI, ByRefEvent]
+public record struct UtilityAiSuspendedKeys(ProtoId<UtilityAiGoalPrototype> Goal, HashSet<string> Keys);
+
+/// <summary>
 /// Invoked each time the Utility AI goal is completed.
 /// </summary>
 /// <remarks>

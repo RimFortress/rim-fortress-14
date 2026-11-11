@@ -110,3 +110,45 @@
     curves:
     - !type:Normalize
     - !type:Quadratic
+
+# Whom an agent runs from, wherever they are: the ones that are hostile to it (by the factions) and the ones that have hit it just now, which
+# it remembers as an opinion effect (see OpinionRecentlyAttacked). Nobody is a threat in general: it is the agent's own idea, so a raider
+# is one for a resident and not for another raider.
+- type: searchQuery
+  id: Threats
+  query: !type:Nearby
+    whitelist:
+      components:
+      - MobState
+    range: 20
+  filters:
+  - !type:IsAlive
+  - !type:Or
+    filters:
+    - !type:IsHostile
+    - !type:Opinion
+      hasEffects:
+      - OpinionRecentlyAttacked
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance
+
+# The ones that have hit the agent just now and are within reach of it: whom it fights back at, instead of running from them (a chaser
+# that is as fast as the one who runs gets a hit in at every stop, and the chase goes on for as long as the one who runs lives).
+- type: searchQuery
+  id: Aggressor
+  query: !type:Nearby
+    whitelist:
+      components:
+      - MobState
+    range: 3.5
+  filters:
+  - !type:IsAlive
+  - !type:Opinion
+    hasEffects:
+    - OpinionRecentlyAttacked
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance

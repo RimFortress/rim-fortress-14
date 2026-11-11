@@ -180,3 +180,67 @@ public sealed partial class Variable : MathCurve
 
     public override float Curve(float value, IMathCurveHandler handler, MathCurveContext ctx) => ctx.Variables[Var];
 }
+
+/// <summary>
+/// Checks if the input number is within the given limits: returns 1 if it is, and 0 if it is not. It is how conditions are
+/// made of numbers, the result can be combined with others by <see cref="MinCurve"/> (both hold) and
+/// <see cref="MaxCurve"/> (one of them holds).
+/// </summary>
+public sealed partial class Threshold : MathCurve
+{
+    /// <summary>
+    /// The number has to be greater than this.
+    /// </summary>
+    [DataField]
+    public float? MoreThan;
+
+    /// <summary>
+    /// The number has to be less than this.
+    /// </summary>
+    [DataField]
+    public float? LessThan;
+
+    /// <summary>
+    /// The number has to be equal to this, give or take a little.
+    /// </summary>
+    [DataField]
+    public float? EqualTo;
+
+    public override float Curve(float value, IMathCurveHandler handler, MathCurveContext ctx)
+    {
+        if (MoreThan is { } more && !(value > more))
+            return 0f;
+
+        if (LessThan is { } less && !(value < less))
+            return 0f;
+
+        if (EqualTo is { } equal && MathF.Abs(value - equal) > 0.0001f)
+            return 0f;
+
+        return 1f;
+    }
+}
+
+/// <summary>
+/// Returns the lesser of the input number and the given one.
+/// </summary>
+public sealed partial class MinCurve : MathCurve
+{
+    [DataField]
+    public List<MathCurve> Min = new();
+
+    public override float Curve(float value, IMathCurveHandler handler, MathCurveContext ctx)
+        => MathF.Min(value, ListValue(Min, handler, ctx: ctx));
+}
+
+/// <summary>
+/// Returns the greater of the input number and the given one.
+/// </summary>
+public sealed partial class MaxCurve : MathCurve
+{
+    [DataField]
+    public List<MathCurve> Max = new();
+
+    public override float Curve(float value, IMathCurveHandler handler, MathCurveContext ctx)
+        => MathF.Max(value, ListValue(Max, handler, ctx: ctx));
+}

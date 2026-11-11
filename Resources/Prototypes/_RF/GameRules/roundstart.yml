@@ -4,6 +4,13 @@
   components:
   - type: Goap
     rootTask: Idle
+    state:
+      CloseDoors: true
+      # How far a resident looks for a place to run to from the threats.
+      FleeRange: 35.0
+  - type: PathProfiles
+    profiles:
+    - Walker
   - type: UtilityAi
     goals:
     # Needs
@@ -19,6 +26,9 @@
     - MentalBreakdownThrow
     - MentalBreakdownAttack
     - MentalBreakdownIdle
+    # Safety
+    - Flee
+    - DefendSelf
     # Executables
     - Dig
     - Chop
@@ -97,13 +107,14 @@
   - type: RimFortressRule
     biome: RfContinental
     defaultPopsJob: Passenger
+    dayDuration: 1800 #30 min
+    popsComponentsOverride: PopsComponentsOverride
+  - type: NarratorRule
+    narrator: Basic
     worldEvents: !type:NestedSelector
       tableId: BasicWorldRulesTable
     globalEvents: !type:NestedSelector
       tableId: BasicGlobalRulesTable
-    narrator: Basic
-    dayDuration: 1800 #30 min
-    popsComponentsOverride: PopsComponentsOverride
 
 - type: entityTable
   id: BasicWorldRulesTable

@@ -29,4 +29,10 @@ public sealed partial class GlobalWorldRuleComponent : Component
 
     [ViewVariables]
     public TimeSpan EndAt;
+
+    /// <summary>
+    /// The narrator that started the event, whose points the event is made of. Null if it was not started by one.
+    /// </summary>
+    [ViewVariables]
+    public EntityUid? Narrator;
 }

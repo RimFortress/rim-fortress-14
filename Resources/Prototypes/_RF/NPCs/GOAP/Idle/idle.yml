@@ -13,7 +13,11 @@
   - proto: Pickup
   - proto: TakeOwnership
   - proto: Interact
+  - proto: Climb
+  - proto: Door
   - proto: Combat
+  - proto: Flee
+  - proto: DefendSelf
   - proto: InventoryStorage
   - proto: Drop
   # Needs
@@ -35,7 +39,6 @@
       rangeKey: IdleRange
     - !type:MoveTo
       rangeKey: InteractRange
-      findPath: false
     - !type:RandomTime
       key: IdleTime
       minSec: 2

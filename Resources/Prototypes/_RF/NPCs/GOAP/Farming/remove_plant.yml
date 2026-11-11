@@ -24,9 +24,8 @@
     - DeadPlant != null
     - NeedSharp == false
     actions:
-    - !type:EntityCoords
-      targetKey: DeadPlant
     - !type:MoveTo
+      targetEntityKey: DeadPlant
       rangeKey: InteractRange
     - !type:InteractWith
       targetKey: DeadPlant

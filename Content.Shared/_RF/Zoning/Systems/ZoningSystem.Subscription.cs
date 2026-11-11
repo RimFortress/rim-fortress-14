@@ -36,7 +36,7 @@ public partial class ZoningSystem
     private void OnAfterZoneHandle(Entity<ZoneComponent> ent, ref AfterAutoHandleStateEvent args)
     {
         if (_player.LocalEntity is not { } player
-            || !_ownership.HasOwner(ent.Owner, player))
+            || !_ownership.IsOwnedBy(ent.Owner, player))
             return;
 
         OnZoneUpdated?.Invoke(ent);
@@ -46,7 +46,7 @@ public partial class ZoningSystem
     private void OnAfterZoneVisualsHandle(Entity<ZoneVisualsComponent> ent, ref AfterAutoHandleStateEvent args)
     {
         if (_player.LocalEntity is not { } player
-            || !_ownership.HasOwner(ent.Owner, player))
+            || !_ownership.IsOwnedBy(ent.Owner, player))
             return;
 
         OnZoneVisualsUpdated?.Invoke(ent);

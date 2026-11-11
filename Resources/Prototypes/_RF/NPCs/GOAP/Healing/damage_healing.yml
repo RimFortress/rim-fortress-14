@@ -148,9 +148,8 @@
   - preconditions:
     - DamageHeal != null
     actions:
-    - !type:EntityCoords
-      targetKey: DamageHeal
     - !type:MoveTo
+      targetEntityKey: DamageHeal
       rangeKey: InteractRange
     - !type:Pickup
       targetKey: DamageHeal
@@ -172,9 +171,8 @@
     - DamageHealPickedUp == true
     - DamageHealTargetEngaged == true
     actions:
-    - !type:EntityCoords
-      targetKey: DamageHealTarget
     - !type:MoveTo
+      targetEntityKey: DamageHealTarget
       rangeKey: InteractRange
     - !type:StartEngagement
       proto: Healing

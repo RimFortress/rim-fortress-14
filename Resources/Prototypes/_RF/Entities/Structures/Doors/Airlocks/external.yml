@@ -1,0 +1,10 @@
+- type: !PartialOnly entity
+  id: AirlockExternal
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: AirlockExternalGlass
+  components:
+  - type: PathTags
+    tags: [Door]

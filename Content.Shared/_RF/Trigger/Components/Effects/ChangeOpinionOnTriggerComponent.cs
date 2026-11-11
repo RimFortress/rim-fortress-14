@@ -18,6 +18,12 @@ public sealed partial class ChangeOpinionOnTriggerComponent : BaseXOnTriggerComp
     public ProtoId<SocialEffectPrototype>? Effect;
 
     /// <summary>
+    /// More effects that are issued with <see cref="Effect"/>, for a trigger that has several things to say about the other entity.
+    /// </summary>
+    [DataField]
+    public List<ProtoId<SocialEffectPrototype>> Effects = new();
+
+    /// <summary>
     /// A prototype of an effect that should be removed in the relationship between two entities
     /// </summary>
     [DataField]

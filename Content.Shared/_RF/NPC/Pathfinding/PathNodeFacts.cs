@@ -1,0 +1,136 @@
+using JetBrains.Annotations;
+using Content.Shared._RF.NPC.Pathfinding.Systems;
+using Content.Shared.Damage;
+
+namespace Content.Shared._RF.NPC.Pathfinding;
+
+/// <summary>
+/// How close a node is to the nearest source of a path tag.
+/// </summary>
+/// <param name="Tag">The index of the tag in the tag cache of <see cref="Systems.SharedRfPathfindingSystem"/>.</param>
+/// <param name="Distance">
+/// The distance to the nearest source in steps of <see cref="Systems.SharedRfPathfindingSystem.DistanceStep"/>,
+/// 0 if the source is on the node itself.
+/// </param>
+public readonly record struct PathInfluence(byte Tag, byte Distance);
+
+/// <summary>
+/// A fixed number of <see cref="PathInfluence"/> slots, <see cref="SharedRfPathfindingSystem.InfluenceSlots"/> of them.
+/// </summary>
+/// <remarks>
+/// The slots are fields, because the sandbox of the client does not allow the methods that the compiler generates
+/// for inline arrays (they return spans).
+/// </remarks>
+public struct PathInfluenceSlots
+{
+    private PathInfluence _0, _1, _2, _3, _4, _5, _6, _7;
+
+    public PathInfluence this[int index]
+    {
+        readonly get => index switch
+        {
+            0 => _0,
+            1 => _1,
+            2 => _2,
+            3 => _3,
+            4 => _4,
+            5 => _5,
+            6 => _6,
+            7 => _7,
+            _ => throw new ArgumentOutOfRangeException(nameof(index)),
+        };
+        set
+        {
+            switch (index)
+            {
+                case 0: _0 = value; break;
+                case 1: _1 = value; break;
+                case 2: _2 = value; break;
+                case 3: _3 = value; break;
+                case 4: _4 = value; break;
+                case 5: _5 = value; break;
+                case 6: _6 = value; break;
+                case 7: _7 = value; break;
+                default: throw new ArgumentOutOfRangeException(nameof(index));
+            }
+        }
+    }
+}
+
+/// <summary>
+/// Facts about a path node that are baked into the navigation map. Costs are not stored here,
+/// they are calculated from these facts by the path profile when the path is searched.
+/// </summary>
+/// <remarks>
+/// Every tag is stored the same way: as a distance to its nearest source. A tag located on the node is a tag
+/// at distance 0, and the strength of a tag's influence is calculated from the distance by the tag's curve.
+/// </remarks>
+public struct PathNodeFacts : IEquatable<PathNodeFacts>
+{
+    /// <summary>
+    /// The number of used <see cref="Influence"/> slots.
+    /// </summary>
+    public byte InfluenceCount;
+
+    /// <summary>
+    /// Tags that influence the node, sorted by the tag index, so equal nodes have equal facts.
+    /// </summary>
+    public PathInfluenceSlots Influence;
+
+    /// <summary>
+    /// Damage that is needed to destroy the node, per damage type, null if the node cannot be destroyed.
+    /// Every dealt type contributes proportionally: a node needing 200 Structural is destroyed by 100 Structural
+    /// and 50% of the rest, a node that does not list a type ignores it entirely.
+    /// </summary>
+    public DamageSpecifier? Destroy;
+
+    /// <summary>
+    /// Are the facts the same: the same tags at the same distances and the same damage to destroy.
+    /// </summary>
+    [PublicAPI, Pure]
+    public bool Equals(PathNodeFacts other)
+    {
+        if (InfluenceCount != other.InfluenceCount || !Equals(Destroy, other.Destroy))
+            return false;
+
+        for (var i = 0; i < InfluenceCount; i++)
+        {
+            if (Influence[i] != other.Influence[i])
+                return false;
+        }
+
+        return true;
+    }
+
+    public override bool Equals(object? obj) => obj is PathNodeFacts other && Equals(other);
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(InfluenceCount);
+
+        for (var i = 0; i < InfluenceCount; i++)
+        {
+            hash.Add(Influence[i]);
+        }
+
+        if (Destroy == null)
+            return hash.ToHashCode();
+
+        // DamageSpecifier hashes by reference, so the equal values have to be hashed manually.
+        var destroy = 0;
+
+        foreach (var (type, amount) in Destroy.DamageDict)
+        {
+            destroy ^= HashCode.Combine(type, amount);
+        }
+
+        hash.Add(destroy);
+
+        return hash.ToHashCode();
+    }
+
+    public static bool operator ==(PathNodeFacts left, PathNodeFacts right) => left.Equals(right);
+
+    public static bool operator !=(PathNodeFacts left, PathNodeFacts right) => !(left == right);
+}

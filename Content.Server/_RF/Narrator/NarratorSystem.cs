@@ -1,113 +1,93 @@
 using Content.Server._RF.GameTicking.Rules;
-using Content.Server._RF.World;
-using Content.Server.Cargo.Systems;
-using Content.Server.Construction.Components;
+using Content.Server._RF.World.Settlements;
+using Content.Server.Administration.Logs;
 using Content.Server.GameTicking;
-using Content.Shared._RF.CCVar;
+using Content.Server.Parallax;
 using Content.Shared._RF.GameTicking.Rules;
+using Content.Shared.Database;
 using Content.Shared._RF.MathHelpers.MathCurve.Systems;
 using Content.Shared._RF.Narrator;
-using Content.Shared._RF.NPC.Components;
 using Content.Shared._RF.NPC.Systems;
-using Content.Shared._RF.World.Components;
+using Content.Shared._RF.Phases;
+using Content.Shared._RF.World.Settlements;
 using Content.Shared.EntityTable;
-using Content.Shared.Item;
-using Robust.Server.Player;
-using Robust.Shared.Configuration;
-using Robust.Shared.Console;
-using Robust.Shared.Map;
+using Content.Shared.GameTicking.Components;
+using Robust.Server.GameObjects;
+using Robust.Shared.Map.Components;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
+using Robust.Shared.Timing;
 
 namespace Content.Server._RF.Narrator;
 
+/// <summary>
+/// The narrator: it decides when events happen to the settlements, and which. The events depend on the settlements alone, each has
+/// its own points (see <see cref="SettlementEventsComponent"/> for the wait for events and <see cref="SettlementWealthComponent"/> for
+/// what the settlement is worth), and the narrator looks at them once in a while, see <see cref="NarratorRuleComponent.UpdateInterval"/>.
+/// </summary>
 public sealed partial class NarratorSystem : EntitySystem
 {
-    [Dependency] private IConfigurationManager _cfg = default!;
-    [Dependency] private PricingSystem _pricing = default!;
-    [Dependency] private IPrototypeManager _prototype = default!;
-    [Dependency] private GameTicker _ticker = default!;
-    [Dependency] private IRobustRandom _random = default!;
-    [Dependency] private RimFortressRuleSystem _rule = default!;
-    [Dependency] private RimFortressWorldSystem _world = default!;
-    [Dependency] private IConsoleHost _host = default!;
-    [Dependency] private IPlayerManager _player = default!;
-    [Dependency] private EntityTableSystem _table = default!;
-    [Dependency] private OwnershipSystem _ownership = default!;
-    [Dependency] private MathCurvesSystem _curves = default!;
+    [Dependency] private IPrototypeManager _prototype = null!;
+    [Dependency] private IRobustRandom _random = null!;
+    [Dependency] private IGameTiming _timing = null!;
+    [Dependency] private GameTicker _ticker = null!;
+    [Dependency] private RimFortressRuleSystem _rule = null!;
+    [Dependency] private EntityTableSystem _table = null!;
+    [Dependency] private MathCurvesSystem _curves = null!;
+    [Dependency] private SettlementSystem _settlements = null!;
+    [Dependency] private SettlementWealthSystem _wealth = null!;
+    [Dependency] private IAdminLogManager _adminLogger = null!;
+    [Dependency] private PhasesSystem _phases = null!;
+    [Dependency] private OwnershipSystem _ownership = null!;
+    [Dependency] private TransformSystem _transform = null!;
+    [Dependency] private BiomeSystem _biome = null!;
+    [Dependency] private MapSystem _map = null!;
 
-    [Dependency] private EntityQuery<ItemComponent> _itemQuery;
-    [Dependency] private EntityQuery<ConstructionComponent> _constructionQuery;
+    [Dependency] private EntityQuery<SettlementEventsComponent> _eventsQuery;
+    [Dependency] private EntityQuery<SettlementWealthComponent> _wealthQuery;
 
-    private readonly Dictionary<EntityUid, int> _lastWaitPoint = new();
-
-    public override void Initialize()
+    /// <summary>
+    /// The wealth of the settlement for the narrator: the categories of it, each counted for as much as the narrator values it.
+    /// </summary>
+    public float SettlementWealth(Entity<SettlementComponent> settlement, ProtoId<NarratorPrototype> proto)
     {
-        base.Initialize();
-        InitializeCommands();
+        if (!_prototype.TryIndex(proto, out var narrator) || !_wealthQuery.TryComp(settlement, out var wealth))
+            return 0;
+
+        var total = 0f;
+
+        foreach (var (category, value) in wealth.Values)
+        {
+            total += CategoryWealth(narrator, category, value);
+        }
+
+        return total;
     }
 
     /// <summary>
-    /// Counts the number of wealth points of the player's settlement
+    /// What a category of the wealth counts for to the narrator.
     /// </summary>
-    public float SettlementWealth(Entity<RimFortressPlayerComponent?> player, ProtoId<NarratorPrototype> proto, EntityCoordinates settlement)
-    {
-        if (!Resolve(player, ref player.Comp)
-            || !_prototype.TryIndex(proto, out var narrator))
-            return 0;
-
-        double itemCost = 0;
-        double constructionCost = 0;
-        double popCost = 0;
-
-        var settlementRadius = _cfg.GetCVar(RfVars.MaxSettlementRadius);
-        var entities = EntityQueryEnumerator<OwnershipComponent, TransformComponent>();
-
-        while (entities.MoveNext(out var uid, out var comp, out var xform))
-        {
-            if (!_ownership.HasOwner(new(uid, comp), player)
-                || !settlement.TryDistance(EntityManager, xform.Coordinates, out var dist)
-                || dist > settlementRadius)
-                continue;
-
-            if (_itemQuery.TryComp(uid, out _))
-                itemCost += _pricing.GetPrice(uid);
-            else if (_constructionQuery.TryComp(uid, out _))
-                constructionCost += _pricing.GetPrice(uid);
-        }
-
-        foreach (var pop in player.Comp.Pops)
-        {
-            if (!TryComp(pop, out TransformComponent? xform)
-                || !settlement.TryDistance(EntityManager, xform.Coordinates, out var dist)
-                || dist > settlementRadius)
-                continue;
-
-            popCost += _pricing.GetPrice(pop);
-        }
-
-        return (float)(itemCost + constructionCost * narrator.ConstructionCostMod + popCost);
-    }
+    public float CategoryWealth(NarratorPrototype narrator, string category, double price)
+        => narrator.WealthWeights.TryGetValue(category, out var curves) && curves.Count > 0
+            ? _curves.Get(curves, (float) price)
+            : (float) price;
 
     /// <summary>
-    /// Counts the narrator's event points that can be spent on summoning events
+    /// Counts the narrator's event points of a settlement that can be spent on summoning events.
     /// </summary>
-    public int EventPoints(Entity<RimFortressPlayerComponent?> player,
-        ProtoId<NarratorPrototype> proto,
-        EntityCoordinates settlement)
+    public int EventPoints(Entity<SettlementComponent> settlement, ProtoId<NarratorPrototype> proto)
     {
-        if (!Resolve(player, ref player.Comp)
-            || !_prototype.TryIndex(proto, out var narrator))
+        if (!_prototype.TryIndex(proto, out var narrator) || !_eventsQuery.TryComp(settlement, out var events))
             return 0;
 
-        var waitPoints = WaitPoint(narrator, player.Comp);
-        var wealth = _curves.Get(narrator.WealthCurves, SettlementWealth(player, proto, settlement));
+        var waitPoints = WaitPoint(narrator, events);
+        var wealth = _curves.Get(narrator.WealthCurves, SettlementWealth(settlement, proto));
         var narratorMood = _curves.Get(narrator.MoodCurves);
 
-        return (int)Math.Floor(wealth + waitPoints * narratorMood);
+        return (int) Math.Floor(wealth + waitPoints * narratorMood) + events.BonusPoints;
     }
 
-    public int GlobalEventPoints(RimFortressRuleComponent rule)
+    public int GlobalEventPoints(NarratorRuleComponent rule)
     {
         if (!_prototype.TryIndex(rule.Narrator, out var narrator))
             return 0;
@@ -115,116 +95,186 @@ public sealed partial class NarratorSystem : EntitySystem
         var waitPoints = GlobalWaitPoint(rule);
         var narratorMood = _curves.Get(narrator.MoodCurves);
 
-        return (int)Math.Floor(waitPoints * narratorMood);
+        return (int) Math.Floor(waitPoints * narratorMood);
     }
 
     /// <summary>
-    /// Returns the points that have accumulated during the time without events
+    /// Returns the points that have accumulated during the time without events.
     /// </summary>
-    public int WaitPoint(NarratorPrototype narrator, RimFortressPlayerComponent player)
+    public int WaitPoint(NarratorPrototype narrator, SettlementEventsComponent events)
     {
-        return (int)Math.Floor((_ticker.RoundDuration() - player.LastEventTime).TotalSeconds * narrator.EventWaitFactor);
+        return (int) Math.Floor((_ticker.RoundDuration() - events.LastEventTime).TotalSeconds * narrator.EventWaitFactor);
     }
 
-    public int GlobalWaitPoint(RimFortressRuleComponent rule)
+    public int GlobalWaitPoint(NarratorRuleComponent rule)
     {
         if (!_prototype.TryIndex(rule.Narrator, out var narrator))
             return 0;
 
-        return (int)Math.Floor((_ticker.RoundDuration() - rule.LastEventTime).TotalSeconds * narrator.EventWaitFactor);
+        return (int) Math.Floor((_ticker.RoundDuration() - rule.LastEventTime).TotalSeconds * narrator.EventWaitFactor);
     }
 
     public override void Update(float frameTime)
     {
         base.Update(frameTime);
 
-        var enumerator = EntityQueryEnumerator<RimFortressRuleComponent>();
-        while (enumerator.MoveNext(out var comp))
+        var now = _timing.CurTime;
+        var enumerator = EntityQueryEnumerator<NarratorRuleComponent, ActiveGameRuleComponent>();
+
+        while (enumerator.MoveNext(out var uid, out var comp, out _))
         {
+            if (now < comp.NextUpdate)
+                continue;
+
+            comp.NextUpdate = now + comp.UpdateInterval;
+
             if (!_prototype.TryIndex(comp.Narrator, out var proto))
                 continue;
 
-            // Local player events
-            var entities = EntityQueryEnumerator<RimFortressPlayerComponent>();
-            while (entities.MoveNext(out var uid, out var player))
-            {
-                var newPoints = WaitPoint(proto, player);
-
-                if (_lastWaitPoint.TryGetValue(uid, out var point) && point != newPoints)
-                {
-                    var chance = _curves.Get(proto.EventChanceCurves, newPoints);
-
-                    if (_random.NextFloat() < chance
-                        && PickRandomEvent(new(uid, player), comp.Narrator) is { } ev)
-                    {
-                        _rule.StartWorldRule(ev.Proto, uid, ev.Coords);
-
-                        player.LastEventTime = _ticker.RoundDuration();
-                        _lastWaitPoint[uid] = 0;
-                        continue;
-                    }
-                }
-
-                _lastWaitPoint[uid] = newPoints;
-            }
-
-            if (comp.GlobalEvents == null)
-                continue;
-
-            // Global world events
-            var globalWaitPoints = GlobalWaitPoint(comp);
-            var globalPoints = GlobalEventPoints(comp);
-
-            if (comp.LastWaitPoints != globalWaitPoints)
-            {
-                var globalChance = _curves.Get(proto.EventChanceCurves, globalWaitPoints);
-                var chance = _random.NextFloat();
-                var available = new List<EntProtoId>();
-
-                foreach (var eventId in _table.GetSpawns(comp.GlobalEvents))
-                {
-                    if (!_prototype.TryIndex(eventId, out var ent)
-                        || !ent.TryComp(out GlobalWorldRuleComponent? rule, EntityManager.ComponentFactory)
-                        || chance > globalChance * rule.ChanceMod
-                        || rule.Cost > globalPoints)
-                        continue;
-
-                    available.Add(eventId);
-                }
-
-                if (available.Count > 0)
-                {
-                    _ticker.StartGameRule(_random.Pick(available));
-                    comp.LastEventTime = _ticker.RoundDuration();
-                    comp.LastWaitPoints = 0;
-                }
-            }
-
-            comp.LastWaitPoints = globalWaitPoints;
+            UpdateSettlements((uid, comp), proto);
+            UpdateGlobal((uid, comp), proto);
         }
     }
 
-    /// <summary>
-    /// Returns a random event that the narrator can trigger
-    /// </summary>
-    public (EntityCoordinates Coords, EntProtoId Proto)? PickRandomEvent(
-        Entity<RimFortressPlayerComponent?> player,
-        ProtoId<NarratorPrototype> narrator)
+    // Local events of the settlements.
+    private void UpdateSettlements(Entity<NarratorRuleComponent> rule, NarratorPrototype narrator)
     {
-        if (!Resolve(player, ref player.Comp))
-            return null;
-
-        var available = new List<(EntityCoordinates Coords, EntProtoId Proto)>();
-        var rules = _rule.AvailableRules(new(player, player.Comp));
-
-        foreach (var (coords, proto, comp) in rules)
+        foreach (var settlement in _settlements.AllSettlements())
         {
-            var points = EventPoints(player, narrator, coords);
-
-            if (comp.Cost > points)
+            if (!_eventsQuery.TryComp(settlement, out var events))
                 continue;
 
-            available.Add((coords, proto));
+            var newPoints = WaitPoint(narrator, events);
+
+            if (events.LastWaitPoints == newPoints)
+                continue;
+
+            events.LastWaitPoints = newPoints;
+
+            var chance = _curves.Get(narrator.EventChanceCurves, newPoints);
+
+            if (_random.NextFloat() >= chance)
+                continue;
+
+            var points = EventPoints(settlement, rule.Comp.Narrator);
+
+            if (PickRandomEvent(settlement, rule) is { } ev)
+            {
+                _adminLogger.Add(
+                    LogType.EventRan,
+                    LogImpact.Low,
+                    $"Narrator: {ToPrettyString(settlement)}: the chance {chance:0.00} has come up, the narrator has {points} points and chooses {ev}");
+                StartEvent(settlement, ev, rule.Owner);
+            }
+            else
+            {
+                _adminLogger.Add(
+                    LogType.EventRan,
+                    LogImpact.Low,
+                    $"Narrator: {ToPrettyString(settlement)}: the chance {chance:0.00} has come up, but no event can be afforded with {points} points ({settlement.Comp.ResidentCount} residents)");
+            }
+        }
+    }
+
+    // Global world events.
+    private void UpdateGlobal(Entity<NarratorRuleComponent> rule, NarratorPrototype proto)
+    {
+        var comp = rule.Comp;
+
+        if (comp.GlobalEvents == null)
+            return;
+
+        var globalWaitPoints = GlobalWaitPoint(comp);
+        var globalPoints = GlobalEventPoints(comp);
+
+        if (comp.LastWaitPoints != globalWaitPoints)
+        {
+            var globalChance = _curves.Get(proto.EventChanceCurves, globalWaitPoints);
+            var chance = _random.NextFloat();
+            var available = new List<EntProtoId>();
+
+            foreach (var eventId in _table.GetSpawns(comp.GlobalEvents))
+            {
+                if (!_prototype.TryIndex(eventId, out var ent)
+                    || !ent.TryComp(out GlobalWorldRuleComponent? globalRule, EntityManager.ComponentFactory)
+                    || chance > globalChance * globalRule.ChanceMod
+                    || globalRule.Cost > globalPoints)
+                    continue;
+
+                available.Add(eventId);
+            }
+
+            if (available.Count > 0)
+            {
+                // The event is made of the points of the narrator that starts it.
+                var ruleEntity = _ticker.AddGameRule(_random.Pick(available));
+                Comp<GlobalWorldRuleComponent>(ruleEntity).Narrator = rule.Owner;
+                _ticker.StartGameRule(ruleEntity);
+                comp.LastEventTime = _ticker.RoundDuration();
+                comp.LastWaitPoints = 0;
+                return;
+            }
+        }
+
+        comp.LastWaitPoints = globalWaitPoints;
+    }
+
+    /// <summary>
+    /// Starts an event for a settlement, and the settlement starts waiting for the next one.
+    /// </summary>
+    /// <param name="settlement">The settlement.</param>
+    /// <param name="proto">The event.</param>
+    /// <param name="narrator">The narrator that starts it, whose points the event is made of. An event that is started without one
+    /// has no points to be made of.</param>
+    /// <param name="ignoreDelay">Start at once, whatever the delay of the event.</param>
+    public bool StartEvent(
+        Entity<SettlementComponent> settlement,
+        EntProtoId proto,
+        EntityUid? narrator = null,
+        bool ignoreDelay = false)
+    {
+        if (!_eventsQuery.TryComp(settlement, out var events))
+            return false;
+
+        var pointsBefore = narrator is { } n && TryComp(n, out NarratorRuleComponent? narratorRule)
+            ? EventPoints(settlement, narratorRule.Narrator)
+            : -1;
+
+        var ruleEntity = _rule.AddWorldRule(proto, settlement);
+        Comp<WorldRuleComponent>(ruleEntity).Narrator = narrator;
+        var started = $"{(narrator == null ? "no narrator" : "narrator " + ToPrettyString(narrator.Value))}, " +
+                      $"the points of the settlement {pointsBefore}, {events.BonusPoints} of them added by hand";
+        _adminLogger.Add(LogType.EventRan, LogImpact.Low, $"{ToPrettyString(ruleEntity)}: {started}");
+
+        if (!_rule.StartWorldRule(ruleEntity, ignoreDelay))
+        {
+            Log.Warning($"{ToPrettyString(ruleEntity)} could not be started");
+            _adminLogger.Add(LogType.EventRan, LogImpact.Medium, $"{ToPrettyString(ruleEntity)}: could not be started");
+            return false;
+        }
+
+        // The points that were added by hand are spent as the others are.
+        if (_prototype.Resolve(proto, out var prototype)
+            && prototype.TryComp(out WorldRuleComponent? worldRule, EntityManager.ComponentFactory))
+            events.BonusPoints = Math.Max(0, events.BonusPoints - worldRule.Cost);
+
+        events.LastEventTime = _ticker.RoundDuration();
+        events.LastWaitPoints = 0;
+        return true;
+    }
+
+    /// <summary>
+    /// Returns a random event that the narrator can trigger for the settlement.
+    /// </summary>
+    public EntProtoId? PickRandomEvent(Entity<SettlementComponent> settlement, Entity<NarratorRuleComponent> rule)
+    {
+        var points = EventPoints(settlement, rule.Comp.Narrator);
+        var available = new List<EntProtoId>();
+
+        foreach (var (proto, comp) in AvailableRules(settlement, rule.Comp))
+        {
+            if (comp.Cost <= points)
+                available.Add(proto);
         }
 
         if (available.Count == 0)
@@ -233,11 +283,48 @@ public sealed partial class NarratorSystem : EntitySystem
         return _random.Pick(available);
     }
 
-    private string DebugTextGlobal()
+    /// <summary>
+    /// The events that can happen to the settlement at all, whatever the points: it is late enough in the round, the biome fits, the
+    /// settlement has as many residents as the event needs.
+    /// </summary>
+    public List<(EntProtoId Proto, WorldRuleComponent Comp)> AvailableRules(
+        Entity<SettlementComponent> settlement,
+        NarratorRuleComponent rule)
     {
-        if (_rule.GetRule() is not { } rule)
-            return string.Empty;
+        var available = new List<(EntProtoId, WorldRuleComponent)>();
 
+        if (rule.WorldEvents == null)
+            return available;
+
+        var coord = _settlements.GetCoordinates(settlement);
+
+        if (_transform.GetGrid(coord) is not { } gridUid)
+            return available;
+
+        var indicates = _map.TileIndicesFor(gridUid, Comp<MapGridComponent>(gridUid), coord);
+
+        foreach (var spawn in _table.GetSpawns(rule.WorldEvents))
+        {
+            if (!_prototype.Resolve(spawn, out var proto)
+                || !proto.TryComp(out WorldRuleComponent? worldRule, EntityManager.ComponentFactory)
+                || _ticker.RoundDuration() < worldRule.StartOffset
+                || settlement.Comp.ResidentCount < worldRule.MinResidents
+                || worldRule.MaxResidents is { } max && settlement.Comp.ResidentCount > max)
+                continue;
+
+            if (worldRule.RequiredBiomes != null
+                && (!_biome.TryGetBiome(indicates, gridUid, out var biome)
+                    || !worldRule.RequiredBiomes.Contains(biome)))
+                continue;
+
+            available.Add((spawn, worldRule));
+        }
+
+        return available;
+    }
+
+    private string DebugTextGlobal(NarratorRuleComponent rule)
+    {
         if (!_prototype.TryIndex(rule.Narrator, out var narrator))
             return "Unknown";
 
@@ -253,56 +340,57 @@ public sealed partial class NarratorSystem : EntitySystem
                 || globalRule.Cost > waitPoints * narratorMood)
                 continue;
 
-            events += $"- {eventId}: {(int)Math.Floor(chance * globalRule.ChanceMod * 100)}%\n";
+            events += $"- {eventId}: {(int) Math.Floor(chance * globalRule.ChanceMod * 100)}%\n";
         }
 
         return "========GLOBAL EVENTS INFO========\n" +
-                $"Event wait points: {waitPoints}\n" +
-                $"Round time seconds: {_ticker.RoundDuration().TotalSeconds}\n" +
-                $"Narrator mood: {narratorMood}\n" +
-                $"Event points: {waitPoints * narratorMood}\n" +
-                $"Current event chance(0-1): {chance}\n" +
-                $"Available events: \n{events}";
+               $"Event wait points: {waitPoints}\n" +
+               $"Round time seconds: {_ticker.RoundDuration().TotalSeconds}\n" +
+               $"Narrator mood: {narratorMood}\n" +
+               $"Event points: {waitPoints * narratorMood}\n" +
+               $"Current event chance(0-1): {chance}\n" +
+               $"Available events: \n{events}";
     }
 
-    private string DebugText(Entity<RimFortressPlayerComponent?> player, ProtoId<NarratorPrototype> protoId)
+    private string DebugText(Entity<SettlementComponent> settlement, NarratorRuleComponent rule)
     {
-        if (!Resolve(player, ref player.Comp) || !_prototype.TryIndex(protoId, out var proto))
+        if (!_prototype.TryIndex(rule.Narrator, out var narrator) || !_eventsQuery.TryComp(settlement, out var settlementEvents))
             return "Unknown";
 
-        var text = "";
-        var waitPoints = WaitPoint(proto, player.Comp);
-        var narratorMood = _curves.Get(proto.MoodCurves);
-        var rules = _rule.AvailableRules(new(player, player.Comp));
-        var chance = _curves.Get(proto.EventChanceCurves, waitPoints);
+        var waitPoints = WaitPoint(narrator, settlementEvents);
+        var narratorMood = _curves.Get(narrator.MoodCurves);
+        var chance = _curves.Get(narrator.EventChanceCurves, waitPoints);
+        var wealth = SettlementWealth(settlement, rule.Narrator);
+        var wealthFactor = _curves.Get(narrator.WealthCurves, wealth);
+        var points = EventPoints(settlement, rule.Narrator);
 
-        foreach (var coords in _world.GetPlayerSettlements(player))
+        var events = "";
+
+        foreach (var (eventId, comp) in AvailableRules(settlement, rule))
         {
-            var wealth = SettlementWealth(player, proto, coords);
-            var wealthFactor = _curves.Get(proto.WealthCurves, wealth);
-
-            var events = "";
-            foreach (var (_, eventId, comp) in rules)
-            {
-                var points = EventPoints(player, protoId, coords);
-
-                if (comp.Cost > points)
-                    continue;
-
-                events += $"- {eventId}\n";
-            }
-
-            text += "=================================\n" +
-                    $"Settlement: {coords}\n" +
-                    $"Settlement wealth: {wealth}\n" +
-                    $"Event wait points: {waitPoints}\n" +
-                    $"Round time seconds: {_ticker.RoundDuration().TotalSeconds}\n" +
-                    $"Narrator mood: {narratorMood}\n" +
-                    $"Event points: {wealthFactor + waitPoints * narratorMood}\n" +
-                    $"Current event chance(0-1): {chance}\n" +
-                    $"Available events: \n{events}";
+            events += $"- {eventId}: cost {comp.Cost}{(comp.Cost > points ? " (not enough points)" : string.Empty)}\n";
         }
 
-        return text;
+        var categories = "";
+
+        if (_wealthQuery.TryComp(settlement, out var wealthComp))
+        {
+            foreach (var (category, value) in wealthComp.Values)
+            {
+                categories += $"  {category}: {value:0} counts for {CategoryWealth(narrator, category, value):0} ({wealthComp.Counts.GetValueOrDefault(category)} things)\n";
+            }
+        }
+
+        return "=================================\n" +
+               $"Settlement: {ToPrettyString(settlement)} (player: {ToPrettyString(settlement.Comp.Player)})\n" +
+               $"Settlement wealth: {wealth}\n{categories}" +
+               $"Wealth points: {wealthFactor}\n" +
+               $"Event wait points: {waitPoints}\n" +
+               $"Bonus points: {settlementEvents.BonusPoints}\n" +
+               $"Round time seconds: {_ticker.RoundDuration().TotalSeconds}\n" +
+               $"Narrator mood: {narratorMood}\n" +
+               $"Event points: {points}\n" +
+               $"Current event chance(0-1): {chance}\n" +
+               $"Available events: \n{events}";
     }
 }

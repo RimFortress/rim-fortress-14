@@ -4,9 +4,8 @@
   - preconditions:
     - Query/BloodLevelHealing != null
     actions:
-    - !type:EntityCoords
-      targetKey: Query/BloodLevelHealing
     - !type:MoveTo
+      targetEntityKey: Query/BloodLevelHealing
       rangeKey: InteractRange
     - !type:Pickup
       targetKey: Query/BloodLevelHealing
@@ -28,9 +27,8 @@
     - LowBloodLevelFriendEngaged == true
     - BloodLevelHealingPickedUp == true
     actions:
-    - !type:EntityCoords
-      targetKey: Query/LowBloodLevelFriend
     - !type:MoveTo
+      targetEntityKey: Query/LowBloodLevelFriend
       rangeKey: InteractRange
     - !type:InteractWith
       targetKey: Query/LowBloodLevelFriend

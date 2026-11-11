@@ -1,0 +1,25 @@
+- type: !PartialOnly entity
+  id: BaseMaterialDoor
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: WoodDoor
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: PaperDoor
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: WebDoor
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: CardDoor
+  components:
+  - type: PathTags
+    tags: [Door]

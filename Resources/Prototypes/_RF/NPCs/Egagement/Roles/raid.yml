@@ -1,0 +1,62 @@
+# A raider is in the raid until it is dead, a raider that is down is still in it. The raid is over when it has none left.
+- type: engagementRole
+  id: Raider
+  force: true
+  stayConditions:
+  - !type:MobState
+    targetState: Dead
+    invert: true
+
+# A raid is split into squads, see FormGroups. A squad has a leader, who goes where the raid goes, and the others, who stay with
+# the leader and fight what they see. The roles of the others are chosen by the engagement system, in proportion to the weights:
+# there are three of the assault for each one of the support. The assault stays close to the leader and the support keeps further
+# off. The breacher carries a crowbar, see below. When the leader is dead one of the others takes his place, see the Raid rule.
+- type: engagementRole
+  id: SquadLeader
+  parent: Raider
+  minCount: 1
+  maxCount: 1
+  weight: 0
+
+- type: engagementRole
+  id: SquadAssault
+  parent: Raider
+  minCount: 0
+  weight: 3
+  onStart:
+    SquadFollowRange: 4.0
+
+- type: engagementRole
+  id: SquadSupport
+  parent: Raider
+  minCount: 0
+  weight: 1
+  onStart:
+    SquadFollowRange: 9.0
+
+# The breacher of a squad: whoever carries a crowbar. It goes ahead to the targets of the squad and breaks through the doors and the
+# walls on the way, and the others follow the way it makes, see the Breacher profile and the goals of the raiders. A squad that has
+# none breaks through by whoever can.
+- type: engagementRole
+  id: SquadBreacher
+  parent: Raider
+  minCount: 0
+  weight: 1
+  conditions:
+  - Query/Crowbar != null
+  onStart:
+    SquadFollowRange: 5.0
+
+# The field medic of a squad: whoever is trained to treat (the purchases of medicine do it, see the Raid), one for a squad. It stays
+# with the leader. What it does is to take the raiders that are down out of the fire to a place where nobody shoots and to treat them
+# there, and to treat the ones that are wounded when it is quiet, see the goals of the raiders and the Rescue.
+- type: engagementRole
+  id: SquadMedic
+  parent: Raider
+  minCount: 0
+  maxCount: 1
+  weight: 2
+  conditions:
+  - FieldMedic == true
+  onStart:
+    SquadFollowRange: 7.0

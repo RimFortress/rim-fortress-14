@@ -1,7 +1,6 @@
 using System.Linq;
 using Content.Server._RF.NPC.Search.Systems;
 using Content.Server._RF.NPC.Systems;
-using Content.Shared._RF.Conversation;
 using Content.Shared._RF.Conversation.Components;
 using Content.Shared._RF.Conversation.Systems;
 using Content.Shared._RF.NPC.GOAP;
@@ -27,7 +26,7 @@ public sealed partial class StartConversation : BaseGoapAction<StartConversation
     public ProtoId<SearchQueryPrototype> Query;
 
     /// <summary>
-    /// A dataset of conversation script IDs to pick randomly from every time this action starts up.
+    /// A dataset of the conversations (the prototypes of their entities) to pick randomly from every time this action starts up.
     /// </summary>
     [DataField(required: true)]
     public ProtoId<DatasetPrototype> Scripts;
@@ -71,22 +70,16 @@ public sealed partial class StartConversationGoapActionSystem : GoapActionSystem
 
         var candidates = new HashSet<EntityUid>(query) { ent };
         var prototypes = dataset.Values
-            .Select(x => new ProtoId<ConversationScriptPrototype>(x))
+            .Select(x => new EntProtoId<ConversationComponent>(x))
             .ToList();
 
         while (prototypes.Count > 0)
         {
             var scriptId = _random.PickAndTake(prototypes);
 
-            if (!_prototype.Resolve(scriptId, out var script))
+            if (!_prototype.HasIndex(scriptId))
             {
-                ProtoNotFound(scriptId);
-                return false;
-            }
-
-            if (!_prototype.Resolve(script.Engagement, out var engagement))
-            {
-                ProtoNotFound(script.Engagement);
+                ProtoNotFound<EntityPrototype>(new ProtoId<EntityPrototype>(scriptId.Id));
                 return false;
             }
 
@@ -97,7 +90,13 @@ public sealed partial class StartConversationGoapActionSystem : GoapActionSystem
             }
 
             // Waiting until almost the very last moment before the invitation ends so that everyone has time to respond
-            Set(ent, action.WaitInvitesAcceptKey, engagement.InviteTime);
+            if (!_conversation.TryGetConversation(ent.Owner, out var started))
+            {
+                CreateDump($"the conversation {scriptId} has been started, but is not found");
+                return false;
+            }
+
+            Set(ent, action.WaitInvitesAcceptKey, started.Value.Comp2.InviteTime);
             return true;
         }
 

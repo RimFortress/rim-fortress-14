@@ -1,0 +1,5 @@
+- type: !PartialOnly entity
+  id: AltarBase
+  components:
+  - type: PathTags
+    tags: [Climbable]

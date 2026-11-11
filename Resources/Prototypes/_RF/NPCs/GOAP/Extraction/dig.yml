@@ -7,9 +7,8 @@
     - Pulled == false
     - Query/Pickaxe != null
     actions:
-    - !type:EntityCoords
-      targetKey: Query/Pickaxe
     - !type:MoveTo
+      targetEntityKey: Query/Pickaxe
       rangeKey: InteractRange
     - !type:Pickup
       targetKey: Query/Pickaxe

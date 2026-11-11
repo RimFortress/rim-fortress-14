@@ -1,5 +1,4 @@
 using System.Numerics;
-using Content.Client._RF.UserInterface.Controllers;
 using Content.Shared._RF.NPC.Systems;
 using Content.Shared._RF.Stockpile.Components;
 using Content.Shared._RF.Zoning.Components;
@@ -48,7 +47,7 @@ public sealed partial class StockpileOverlay : GridOverlay
         _zoning ??= _entity.System<ZoningSystem>();
         _ownership ??= _entity.System<OwnershipSystem>();
 
-        foreach (var uid in _ownership.GetOwned(owner))
+        foreach (var uid in _ownership.GetOwnedRecursively(owner))
         {
             if (!_entity.TryGetComponent(uid, out StockpileComponent? stock)
                 || !_entity.TryGetComponent(uid, out ZoneComponent? zone))

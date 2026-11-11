@@ -1,0 +1,733 @@
+#nullable enable
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
+using Content.IntegrationTests.Fixtures;
+using Content.IntegrationTests.Fixtures.Attributes;
+using Content.Server._RF.NPC.Pathfinding.Systems;
+using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Components;
+using Content.Shared._RF.NPC.GOAP.Systems;
+using Content.Shared._RF.NPC.Pathfinding;
+using Content.Shared._RF.NPC.Pathfinding.Algorithms;
+using Content.Shared._RF.NPC.Pathfinding.Components;
+using Content.Shared._RF.NPC.Pathfinding.Prototypes;
+using Content.Shared._RF.NPC.Pathfinding.Systems;
+using Content.Shared.Parallax.Biomes;
+using Robust.Shared.CPUJob.JobQueues;
+using Robust.Shared.CPUJob.JobQueues.Queues;
+using Robust.Shared.GameObjects;
+using Robust.Shared.Map;
+using Robust.Shared.Map.Components;
+using Robust.Shared.Maths;
+using Robust.Shared.Prototypes;
+
+namespace Content.IntegrationTests.Tests._RF.NPC.Pathfinding;
+
+[TestOf(typeof(SharedRfPathfindingSystem))]
+public sealed class RfPathfindingTest : GameTest
+{
+    [TestPrototypes]
+    private const string Prototypes = @"
+- type: pathTag
+  id: TestLava
+  influence: 2
+
+- type: pathTag
+  id: TestThreat
+  dynamic: true
+  influence: 6
+  influenceCurve:
+  - div: [var: radius]
+  - mul: [float: -1]
+  - add: [float: 1]
+
+- type: entity
+  id: TestPathWall
+  components:
+  - type: Physics
+    bodyType: Static
+  - type: Fixtures
+    fixtures:
+      fix1:
+        shape:
+          !type:PhysShapeAabb
+          bounds: ""-0.5,-0.5,0.5,0.5""
+        mask:
+        - MobMask
+        layer:
+        - Impassable
+  - type: Damageable
+    damageContainer: StructuralInorganic
+  - type: Destructible
+    thresholds:
+    - trigger:
+        !type:DamageTypeTrigger
+        damageType: Structural
+        damage: 100
+      behaviors:
+      - !type:DoActsBehavior
+        acts: [ ""Destruction"" ]
+
+- type: entity
+  id: TestPathLava
+  components:
+  - type: PathTags
+    tags:
+    - TestLava
+
+- type: entity
+  id: TestPathMarker
+
+- type: goapCompound
+  id: TestPathRoot
+  tasks:
+  - preconditions: []
+    action: !type:MoveTo
+    effects:
+      Noop: true
+
+- type: pathProfile
+  id: TestWalker
+  rules:
+  # The entities with the dynamic tag are avoided, wherever they are when the path is searched for.
+  - when:
+    - !type:TagInfluence
+      tag: TestThreat
+      moreThan: 0
+    cost:
+    - var: influence
+    - mul: [float: 30]
+  - when:
+    - !type:Blocked
+    cost:
+    - float: 10000
+  # The settlements radiate the cost for those who leave.
+  - when:
+    - !type:TagInfluence
+      tag: Settlement
+      moreThan: 0
+    - !type:Query
+      id: Retreat
+    cost:
+    - var: influence
+    - mul: [float: 10]
+
+# A query that does not go through anything that costs a lot, and gives up instead of coming close.
+- type: pathQuery
+  id: TestStrictQuery
+  algorithm: !type:AStar
+    maxCost: 5000
+    allowPartial: false
+
+- type: pathQuery
+  id: TestQuery
+
+- type: pathProfile
+  id: TestStrict
+  rules:
+  - when:
+    - !type:Blocked
+    cost:
+    - float: 10000
+
+# What is blocked is gone through if it is not much, so the profile after the strict one finds the path.
+- type: pathProfile
+  id: TestLenient
+  rules:
+  - when:
+    - !type:Blocked
+    cost:
+    - float: 20
+
+# The same profile, the rules of it are for different queries.
+- type: pathProfile
+  id: TestByQuery
+  rules:
+  - when:
+    - !type:Blocked
+    - !type:Query
+      id: TestStrictQuery
+    cost:
+    - float: 10000
+  - when:
+    - !type:Blocked
+    - !type:Query
+      id: TestStrictQuery
+      invert: true
+    cost:
+    - float: 20
+
+- type: entity
+  id: TestPathAgent
+  components:
+  - type: Goap
+    rootTask: TestPathRoot
+  - type: PathProfiles
+    profiles:
+    - TestWalker
+  - type: Physics
+    bodyType: Static
+  - type: Fixtures
+    fixtures:
+      fix1:
+        shape:
+          !type:PhysShapeAabb
+          bounds: ""-0.25,-0.25,0.25,0.25""
+        mask:
+        - MobMask
+        layer:
+        - MobLayer
+
+- type: entity
+  id: TestPathLadderAgent
+  parent: TestPathAgent
+  components:
+  - type: PathProfiles
+    profiles:
+    - TestStrict
+    - TestLenient
+";
+
+    [SidedDependency(Side.Server)] private readonly RfPathfindingSystem _pathfinding = default!;
+    [SidedDependency(Side.Server)] private readonly SharedMapSystem _maps = default!;
+    [SidedDependency(Side.Server)] private readonly IEntityManager _entMan = default!;
+
+    private static RfPathPoly Poly(RfPathfindingChunk chunk, int x, int y)
+        => chunk.GetPolys(RfPathfindingChunk.TileIndex(x, y))[0];
+
+    /// <summary>
+    /// A chunk built from the world: every kind of tile gets the data that the world has on it, the polys are linked,
+    /// a chunk next to the map is built when a search reaches it and a chunk that is not used is removed.
+    /// </summary>
+    [Test]
+    public async Task TestChunkLifecycle()
+    {
+        var map = await Pair.CreateTestMap();
+        var grid = map.Grid;
+        EntityUid marker = default;
+
+        await Pair.Server.WaitPost(() =>
+        {
+            for (var x = 0; x < 8; x++)
+            {
+                for (var y = 0; y < 8; y++)
+                {
+                    _maps.SetTile(grid.Owner, grid.Comp, new Vector2i(x, y), new Tile(1));
+                }
+            }
+
+            _entMan.SpawnAtPosition("TestPathWall", new EntityCoordinates(grid, 2.5f, 1.5f));
+            _entMan.SpawnAtPosition("TestPathLava", new EntityCoordinates(grid, 5.5f, 1.5f));
+            marker = _entMan.SpawnAtPosition("TestPathMarker", new EntityCoordinates(grid, 1.5f, 5.5f));
+        });
+
+        await Pair.RunTicksSync(5);
+
+        RfPathPoly farPoly = default!;
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var chunk = _pathfinding.EnsureChunk(grid, Vector2i.Zero);
+            Assert.That(chunk, Is.Not.Null);
+
+            // An empty tile.
+            farPoly = Poly(chunk!, 0, 0);
+            Assert.That(farPoly.Data.IsFreeSpace, Is.True);
+            Assert.That(farPoly.Data.CollisionMask, Is.EqualTo(0));
+            Assert.That(farPoly.Neighbors.Count, Is.GreaterThanOrEqualTo(2), "polys must be linked to the polys next to them");
+
+            // A wall that can be destroyed with a particular type of damage.
+            var wall = Poly(chunk!, 2, 1);
+            Assert.That(wall.Data.CollisionLayer, Is.Not.EqualTo(0));
+            Assert.That(wall.Data.Facts.Destroy, Is.Not.Null);
+            Assert.That(wall.Data.Facts.Destroy!.DamageDict["Structural"].Float(), Is.EqualTo(100f));
+
+            // A tag is located on its tile.
+            var lava = Poly(chunk!, 5, 1);
+            Assert.That(_pathfinding.HasTag(lava.Data.Facts, "TestLava"), Is.True);
+            Assert.That(_pathfinding.GetInfluence(lava.Data.Facts, "TestLava"), Is.GreaterThan(0f));
+
+            // And influences the tiles close to it, the influence depends on the distance.
+            var near = chunk!.GetPolys(RfPathfindingChunk.TileIndex(7, 1));
+            Assert.That(near.Count, Is.GreaterThan(1), "points at different distances must not be merged");
+
+            for (var i = 0; i < near.Count; i++)
+            {
+                Assert.That(_pathfinding.HasTag(near[i].Data.Facts, "TestLava"), Is.False);
+                Assert.That(_pathfinding.GetInfluence(near[i].Data.Facts, "TestLava"), Is.GreaterThan(0f));
+            }
+
+            // A tile with the same tag far away is not influenced.
+            Assert.That(_pathfinding.GetInfluence(farPoly.Data.Facts, "TestLava"), Is.EqualTo(0f));
+
+            // The map is only a cache: the same chunk is returned while it exists.
+            Assert.That(_pathfinding.EnsureChunk(grid, Vector2i.Zero), Is.SameAs(chunk));
+
+            // A search that reaches the border of the chunk builds the next one, and the polys are linked.
+            var border = Poly(chunk, 7, 6);
+            Assert.That(_pathfinding.EnsureNeighbors(border), Is.EqualTo(1));
+            Assert.That(_pathfinding.EnsureNeighbors(border), Is.EqualTo(0));
+            Assert.That(border.Neighbors.Any(x => x.ChunkOrigin == new Vector2i(1, 0)), Is.True);
+        });
+
+        // A change of a tag marks the chunk, and the system rebuilds it by itself.
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(_pathfinding.AddTag(marker, "TestLava"), Is.True);
+            Assert.That(_entMan.GetComponent<RfGridPathfindingComponent>(grid).DirtyChunks, Does.Contain(Vector2i.Zero));
+        });
+
+        await Pair.RunTicksSync(60);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var chunk = _entMan.GetComponent<RfGridPathfindingComponent>(grid).Chunks[Vector2i.Zero];
+            Assert.That(_pathfinding.HasTag(Poly(chunk, 1, 5).Data.Facts, "TestLava"), Is.True);
+            Assert.That(farPoly.IsValid(), Is.True, "polys that did not change must stay valid");
+        });
+
+        // Chunks that are not used are removed, and the polys are invalidated for those who still hold them.
+        await Pair.Server.WaitPost(() =>
+        {
+            _entMan.GetComponent<RfGridPathfindingComponent>(grid).ChunkLifetime = TimeSpan.FromSeconds(1);
+        });
+
+        await Pair.RunTicksSync(900);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(_entMan.GetComponent<RfGridPathfindingComponent>(grid).Chunks, Is.Empty);
+            Assert.That(farPoly.IsValid(), Is.False);
+        });
+    }
+
+    /// <summary>
+    /// Creates a world of floor tiles and a path agent in its corner, which is out of the way of the searches.
+    /// </summary>
+    private async Task<(Entity<MapGridComponent> Grid, Entity<PathProfilesComponent, GoapComponent> Agent)> CreateWorld(
+        int width,
+        string agentProto,
+        params (int X, int Y)[] walls)
+    {
+        var map = await Pair.CreateTestMap();
+        var grid = map.Grid;
+        EntityUid agent = default;
+
+        await Pair.Server.WaitPost(() =>
+        {
+            for (var x = 0; x < width; x++)
+            {
+                for (var y = 0; y < 8; y++)
+                {
+                    _maps.SetTile(grid.Owner, grid.Comp, new Vector2i(x, y), new Tile(1));
+                }
+            }
+
+            foreach (var (x, y) in walls)
+            {
+                _entMan.SpawnAtPosition("TestPathWall", new EntityCoordinates(grid, x + 0.5f, y + 0.5f));
+            }
+
+            agent = _entMan.SpawnAtPosition(agentProto, new EntityCoordinates(grid, 0.5f, 7.5f));
+        });
+
+        await Pair.RunTicksSync(5);
+
+        return (grid, new Entity<PathProfilesComponent, GoapComponent>(
+            agent,
+            _entMan.GetComponent<PathProfilesComponent>(agent),
+            _entMan.GetComponent<GoapComponent>(agent)));
+    }
+
+    /// <summary>
+    /// Runs the search the way a job queue does it.
+    /// </summary>
+    private PathSearchResult Search(
+        Entity<MapGridComponent> grid,
+        Entity<PathProfilesComponent, GoapComponent> agent,
+        PathAlgorithm algorithm,
+        Vector2 start,
+        Vector2? target,
+        float range = 0.4f,
+        double maxTime = 0.05,
+        ProtoId<PathQueryPrototype>? query = null,
+        IReadOnlyList<PathAvoid>? avoid = null)
+    {
+        Assert.That(_pathfinding.BeginRequest(agent, "TestWalker", query), Is.True);
+
+        var job = new PathJob(
+            maxTime,
+            agent,
+            new EntityCoordinates(grid, start),
+            target == null ? null : new EntityCoordinates(grid, target.Value),
+            range,
+            algorithm,
+            _pathfinding,
+            avoid: avoid);
+        var queue = new JobQueue();
+        queue.EnqueueJob(job);
+
+        for (var i = 0; i < 1_000_000 && job.Status != JobStatus.Finished; i++)
+        {
+            queue.Process();
+        }
+
+        Assert.That(job.Status, Is.EqualTo(JobStatus.Finished));
+        return job.Result;
+    }
+
+    /// <summary>
+    /// The path goes around a wall, which costs more than the detour, and the result does not depend on
+    /// how often the job is suspended.
+    /// </summary>
+    [Test]
+    public async Task TestAStarGoesAroundWalls()
+    {
+        var (grid, agent) = await CreateWorld(8, "TestPathAgent", (3, 3));
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var target = new Vector2(6.5f, 3.5f);
+            var result = Search(grid, agent, new AStar(), new Vector2(0.5f, 3.5f), target);
+
+            Assert.That(result.Status, Is.EqualTo(PathSearchStatus.Path));
+            Assert.That(result.Path, Is.Not.Empty);
+            Assert.That(result.Path.Any(x => x.Box.Contains(new Vector2(3.5f, 3.5f))), Is.False, "the path must not go through the wall");
+            Assert.That(result.Path[0].Box.Contains(new Vector2(0.5f, 3.5f)), Is.True);
+            Assert.That(result.Path[^1].Box.Left, Is.GreaterThanOrEqualTo(5f), "the path must lead to the target");
+
+            // A job that gives control back all the time must find the same path.
+            var suspended = Search(grid, agent, new AStar(), new Vector2(0.5f, 3.5f), target, maxTime: 1e-7);
+            Assert.That(suspended.Status, Is.EqualTo(PathSearchStatus.Path));
+            Assert.That(suspended.Path, Is.EqualTo(result.Path));
+        });
+    }
+
+    /// <summary>
+    /// A search builds the chunks it reaches, but not more of them than it is allowed to.
+    /// </summary>
+    [Test]
+    public async Task TestAStarBuildsChunksWithinTheLimit()
+    {
+        var (grid, agent) = await CreateWorld(32, "TestPathAgent");
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var map = _entMan.GetComponent<RfGridPathfindingComponent>(grid);
+            var start = new Vector2(0.5f, 3.5f);
+
+            // Two chunks lie between the start and the target, and only one may be built.
+            var limited = Search(grid, agent, new AStar { MaxChunks = 1 }, start, new Vector2(28.5f, 3.5f));
+            Assert.That(limited.Status, Is.EqualTo(PathSearchStatus.PartialPath));
+            Assert.That(map.Chunks.Keys, Does.Contain(new Vector2i(1, 0)), $"last node {limited.Path[^1]}, count {limited.Path.Count}");
+            Assert.That(map.Chunks.ContainsKey(new Vector2i(2, 0)), Is.False);
+
+            // The same search without the limit builds the rest and reaches the target.
+            var result = Search(grid, agent, new AStar(), start, new Vector2(28.5f, 3.5f));
+            Assert.That(result.Status, Is.EqualTo(PathSearchStatus.Path));
+            Assert.That(result.Path[^1].Chunk, Is.EqualTo(new Vector2i(3, 0)));
+            Assert.That(map.Chunks.ContainsKey(new Vector2i(2, 0)), Is.True);
+        });
+    }
+
+    /// <summary>
+    /// A wall costs a lot but can be passed, unless the search is not allowed to consider paths that expensive.
+    /// </summary>
+    [Test]
+    public async Task TestAStarMaxCost()
+    {
+        var (grid, agent) = await CreateWorld(8, "TestPathAgent", (4, 0), (4, 1), (4, 2), (4, 3), (4, 4), (4, 5), (4, 6), (4, 7));
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var start = new Vector2(0.5f, 3.5f);
+            var target = new Vector2(7.5f, 3.5f);
+
+            var through = Search(grid, agent, new AStar(), start, target);
+            Assert.That(through.Status, Is.EqualTo(PathSearchStatus.Path));
+
+            var limited = Search(grid, agent, new AStar { MaxCost = 5000f }, start, target);
+            Assert.That(limited.Status, Is.EqualTo(PathSearchStatus.PartialPath));
+            Assert.That(limited.Path[^1].Box.Right, Is.LessThanOrEqualTo(4f), "the path must stop in front of the wall");
+
+            var none = Search(grid, agent, new AStar { MaxCost = 5000f, AllowPartial = false }, start, target);
+            Assert.That(none.Status, Is.EqualTo(PathSearchStatus.NoPath));
+        });
+    }
+
+    /// <summary>
+    /// A search without a destination leads to a node within the range.
+    /// </summary>
+    [Test]
+    public async Task TestBfsPicksNodeInRange()
+    {
+        var (grid, agent) = await CreateWorld(8, "TestPathAgent");
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var start = new Vector2(3.5f, 3.5f);
+            var result = Search(grid, agent, new Bfs { Range = 4f, MinRange = 3f, Pick = BfsPick.Farthest }, start, null, range: 0f);
+
+            Assert.That(result.Status, Is.EqualTo(PathSearchStatus.Path));
+
+            var distance = Vector2.Distance(start, result.Path[^1].Box.Center);
+            Assert.That(distance, Is.InRange(3f, 4.01f));
+
+            for (var i = 0; i < 20; i++)
+            {
+                var random = Search(grid, agent, new Bfs { Range = 4f, MinRange = 3f }, start, null, range: 0f);
+                Assert.That(Vector2.Distance(start, random.Path[^1].Box.Center), Is.InRange(3f, 4.01f));
+            }
+
+            // The range of the request replaces the one of the algorithm.
+            var limited = Search(grid, agent, new Bfs { Range = 20f, MinRange = 3f, Pick = BfsPick.Farthest }, start, null, range: 4f);
+            Assert.That(Vector2.Distance(start, limited.Path[^1].Box.Center), Is.InRange(3f, 4.01f));
+        });
+    }
+
+    /// <summary>
+    /// Only the middle chunk of the world is loaded, the agent stands in it.
+    /// </summary>
+    private async Task<(Entity<MapGridComponent> Grid, Entity<PathProfilesComponent, GoapComponent> Agent)> CreateLoadedMiddle()
+    {
+        var world = await CreateWorld(24, "TestPathAgent");
+
+        await Pair.Server.WaitPost(() =>
+        {
+            // The world is a strip, 8 tiles high.
+            for (var x = 0; x < 24; x++)
+            {
+                for (var y = 8; y < 24; y++)
+                {
+                    _maps.SetTile(world.Grid.Owner, world.Grid.Comp, new Vector2i(x, y), new Tile(1));
+                }
+            }
+
+            var biome = _entMan.AddComponent<BiomeComponent>(world.Grid);
+            biome.Enabled = false;
+#pragma warning disable RA0002
+            biome.LoadedChunks.Add(new Vector2i(8, 8));
+#pragma warning restore RA0002
+        });
+
+        return world;
+    }
+
+    /// <summary>
+    /// A search for the way out leads to the closest node that is not in the area that is loaded.
+    /// </summary>
+    [Test]
+    public async Task TestBfsLeadsOutOfTheLoadedArea()
+    {
+        var (grid, agent) = await CreateLoadedMiddle();
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var start = new Vector2(11.5f, 11.5f);
+            var result = Search(grid, agent, new Bfs { Range = 40f, MaxNodes = 0, Pick = BfsPick.Unobserved }, start, null, range: 0f);
+
+            Assert.That(result.Status, Is.EqualTo(PathSearchStatus.Path));
+
+            var end = result.Path[^1].Box.Center;
+            Assert.That(end.X < 8f || end.X >= 16f || end.Y < 8f || end.Y >= 16f, Is.True, $"{end} is in the loaded chunk");
+            Assert.That(Vector2.Distance(start, end), Is.LessThan(6f), "the closest way out");
+        });
+    }
+
+    /// <summary>
+    /// When the whole world is loaded there is nowhere to leave to, and the path leads as far as it goes.
+    /// </summary>
+    [Test]
+    public async Task TestBfsHasNowhereToLeaveTo()
+    {
+        var (grid, agent) = await CreateWorld(8, "TestPathAgent");
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var result = Search(grid, agent, new Bfs { Range = 40f, Pick = BfsPick.Unobserved }, new Vector2(3.5f, 3.5f), null, range: 0f);
+            Assert.That(result.Status, Is.EqualTo(PathSearchStatus.PartialPath));
+        });
+    }
+
+    /// <summary>
+    /// The path keeps away from the entities that have a dynamic tag that the profile has a rule for, where they are: with two ways that
+    /// are the same, it takes the one that is not near them. The tag is not baked into the navigation map.
+    /// </summary>
+    [Test]
+    public async Task TestPathAvoidsTheEntitiesWithADynamicTag()
+    {
+        // A wall across the strip with two gaps, at the bottom and at the top, and the target on the other side.
+        var walls = Enumerable.Range(0, 8).Where(y => y != 1 && y != 6).Select(y => (12, y)).ToArray();
+        var (grid, agent) = await CreateWorld(24, "TestPathAgent", walls);
+        EntityUid threat = default;
+
+        await Pair.Server.WaitPost(() =>
+        {
+            threat = _entMan.SpawnEntity(null, new EntityCoordinates(grid, 12.5f, 1.5f));
+            _pathfinding.AddTag(threat, "TestThreat");
+        });
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            var start = new Vector2(3.5f, 3.5f);
+            var target = new Vector2(20.5f, 3.5f);
+
+            // The entity is at the bottom gap: the path goes by the top one.
+            var avoided = Search(grid, agent, new AStar(), start, target);
+            Assert.That(avoided.Status, Is.EqualTo(PathSearchStatus.Path));
+            Assert.That(CrossingAt(avoided, 12), Is.GreaterThan(4f), "by the top gap");
+
+            // And the other way round.
+            _entMan.GetComponent<TransformComponent>(threat).LocalPosition = new Vector2(12.5f, 6.5f);
+            var other = Search(grid, agent, new AStar(), start, target);
+            Assert.That(CrossingAt(other, 12), Is.LessThan(4f), "by the bottom gap");
+        });
+    }
+
+    /// <summary>
+    /// The y of the path where it goes by the column.
+    /// </summary>
+    private static float CrossingAt(PathSearchResult result, int column)
+        => result.Path.First(x => x.Box.Center.X >= column && x.Box.Center.X < column + 1).Box.Center.Y;
+
+    /// <summary>
+    /// Runs the game until the search of the agent is over.
+    /// </summary>
+    private async Task WaitForRequest(Entity<PathProfilesComponent, GoapComponent> agent)
+    {
+        var status = PathRequestStatus.Searching;
+
+        for (var i = 0; i < 100 && status == PathRequestStatus.Searching; i++)
+        {
+            await Pair.RunTicksSync(2);
+            await Pair.Server.WaitPost(() => status = _pathfinding.GetStatus(agent));
+        }
+
+        Assert.That(status, Is.EqualTo(PathRequestStatus.Finished));
+    }
+
+    /// <summary>
+    /// A request goes through the profiles of the agent: when a profile does not find a path, the next one is tried.
+    /// </summary>
+    [Test]
+    public async Task TestRequestTriesNextProfile()
+    {
+        var (grid, agent) = await CreateWorld(8, "TestPathLadderAgent",
+            (4, 0), (4, 1), (4, 2), (4, 3), (4, 4), (4, 5), (4, 6), (4, 7));
+        var target = new EntityCoordinates(grid, 7.5f, 3.5f);
+
+        await Pair.Server.WaitPost(() =>
+        {
+            Assert.That(_pathfinding.GetProfiles(agent), Has.Count.EqualTo(2));
+            Assert.That(_pathfinding.RequestPath(agent, "TestStrictQuery", target, 0.4f), Is.True);
+            Assert.That(_pathfinding.GetStatus(agent), Is.EqualTo(PathRequestStatus.Searching));
+        });
+
+        await WaitForRequest(agent);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(_pathfinding.TryGetResult(agent, out var result, out var profile), Is.True);
+
+            // The first profile does not go through the wall, so the second one found the path.
+            Assert.That(profile, Is.EqualTo((ProtoId<PathProfilePrototype>?) "TestLenient"));
+            Assert.That(result.Status, Is.EqualTo(PathSearchStatus.Path));
+
+            // The result stays until it is cancelled.
+            Assert.That(_pathfinding.TryGetResult(agent, out _, out _), Is.True);
+            _pathfinding.CancelPath(agent.Owner);
+            Assert.That(_pathfinding.GetStatus(agent), Is.EqualTo(PathRequestStatus.None));
+            Assert.That(_pathfinding.TryGetResult(agent, out _, out _), Is.False);
+        });
+    }
+
+    /// <summary>
+    /// A request with a particular profile only tries that profile, and one without a target is searched
+    /// by the algorithm that chooses the place itself.
+    /// </summary>
+    [Test]
+    public async Task TestRequestSingleProfile()
+    {
+        var (grid, agent) = await CreateWorld(8, "TestPathLadderAgent",
+            (4, 0), (4, 1), (4, 2), (4, 3), (4, 4), (4, 5), (4, 6), (4, 7));
+
+        await Pair.Server.WaitPost(() =>
+        {
+            Assert.That(_pathfinding.RequestPath(agent, "TestStrictQuery", new EntityCoordinates(grid, 7.5f, 3.5f), 0.4f, "TestStrict"), Is.True);
+        });
+
+        await WaitForRequest(agent);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(_pathfinding.TryGetResult(agent, out var result, out var profile), Is.True);
+            Assert.That(result.Status, Is.EqualTo(PathSearchStatus.NoPath));
+            Assert.That(profile, Is.Null);
+
+            Assert.That(_pathfinding.RequestPath(agent, "TestStrictQuery", null, 0f, "TestNoSuchProfile"), Is.False);
+            Assert.That(_pathfinding.GetStatus(agent), Is.EqualTo(PathRequestStatus.None));
+        });
+    }
+
+    /// <summary>
+    /// A request that is cancelled does not leave a result, even if its search had not started yet.
+    /// </summary>
+    [Test]
+    public async Task TestRequestCancel()
+    {
+        var (grid, agent) = await CreateWorld(8, "TestPathAgent");
+
+        await Pair.Server.WaitPost(() =>
+        {
+            Assert.That(_pathfinding.RequestPath(agent, "TestQuery", new EntityCoordinates(grid, 6.5f, 3.5f), 0.4f), Is.True);
+            _pathfinding.CancelPath(agent.Owner);
+            Assert.That(_pathfinding.GetStatus(agent), Is.EqualTo(PathRequestStatus.None));
+        });
+
+        await Pair.RunTicksSync(20);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(_pathfinding.GetStatus(agent), Is.EqualTo(PathRequestStatus.None));
+
+            // A new request works after the cancelled one.
+            Assert.That(_pathfinding.RequestPath(agent, "TestQuery", new EntityCoordinates(grid, 6.5f, 3.5f), 0.4f), Is.True);
+        });
+
+        await WaitForRequest(agent);
+
+        await Pair.Server.WaitAssertion(() =>
+        {
+            Assert.That(_pathfinding.TryGetResult(agent, out var result, out _), Is.True);
+            Assert.That(result.Status, Is.EqualTo(PathSearchStatus.Path));
+        });
+    }
+
+    /// <summary>
+    /// The rules of a profile can be for some queries and not for the others: with the same profile the agent can go
+    /// through what is blocked for one request and cannot for another.
+    /// </summary>
+    [Test]
+    public async Task TestRulesCanBeForOneQuery()
+    {
+        var (grid, agent) = await CreateWorld(8, "TestPathAgent",
+            (4, 0), (4, 1), (4, 2), (4, 3), (4, 4), (4, 5), (4, 6), (4, 7));
+        var target = new EntityCoordinates(grid, 7.5f, 3.5f);
+
+        foreach (var (query, expected) in new[] { ("TestStrictQuery", PathSearchStatus.NoPath), ("TestQuery", PathSearchStatus.Path) })
+        {
+            await Pair.Server.WaitPost(() =>
+                Assert.That(_pathfinding.RequestPath(agent, query, target, 0.4f, "TestByQuery"), Is.True));
+
+            await WaitForRequest(agent);
+
+            await Pair.Server.WaitAssertion(() =>
+            {
+                Assert.That(_pathfinding.TryGetResult(agent, out var result, out _), Is.True);
+                Assert.That(result.Status, Is.EqualTo(expected), query);
+                _pathfinding.CancelPath(agent.Owner);
+            });
+        }
+    }
+}

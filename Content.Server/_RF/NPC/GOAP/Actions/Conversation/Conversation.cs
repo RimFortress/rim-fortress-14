@@ -1,7 +1,6 @@
 using Content.Server._RF.NPC.GOAP.Actions.Movement;
 using Content.Server._RF.NPC.Systems;
 using Content.Server.Chat.Systems;
-using Content.Server.NPC.Pathfinding;
 using Content.Shared._RF.Conversation.Components;
 using Content.Shared._RF.Conversation.Systems;
 using Content.Shared._RF.NPC.GOAP;
@@ -26,11 +25,6 @@ public sealed partial class Conversation : BaseGoapAction<Conversation>
     [DataField]
     public StateKey<float> ConversationRangeKey = GoapState.ConversationRange;
 
-    /// <summary>
-    /// Where the pathfinding result will be stored (if applicable). This gets removed after execution.
-    /// </summary>
-    [DataField]
-    public StateKey<PathResultEvent> PathfindKey = "ConversationMovementPathfinding";
 }
 
 public sealed partial class ConversationGoapActionSystem : GoapActionSystem<Conversation>
@@ -62,7 +56,7 @@ public sealed partial class ConversationGoapActionSystem : GoapActionSystem<Conv
 
     protected override void ActionShutdown(Entity<GoapComponent> ent, Conversation action)
     {
-        ent.Comp.State.Remove(action.PathfindKey);
+        _moveTo.Stop(ent);
         NpcTimingSystem.ClearQueue(ent);
     }
 
@@ -78,13 +72,16 @@ public sealed partial class ConversationGoapActionSystem : GoapActionSystem<Conv
             return GoapActionResult.Finished;
 
         var actor = new Entity<ConversationActorComponent?>(ent, comp);
-        var result = _moveTo.Move(ent, this, comp.TargetPos, comp.TargetRangeKey, action.PathfindKey);
+        var result = _moveTo.Move(ent, this, comp.TargetPos, comp.TargetRangeKey);
 
         if (result != GoapActionResult.Finished)
         {
             _conversation.SetReady(actor, false);
             return result;
         }
+
+
+        _conversation.RefreshFaceTo(actor);
 
         if (!_rotate.TryFaceCoordinates(ent, comp.TargetFaceTo))
         {
@@ -98,6 +95,8 @@ public sealed partial class ConversationGoapActionSystem : GoapActionSystem<Conv
 
         if (waitResult != GoapActionResult.Finished)
             return waitResult;
+
+        _conversation.RefreshFaceTo(actor);
 
         if (!_rotate.TryFaceCoordinates(ent, comp.TargetFaceTo))
         {

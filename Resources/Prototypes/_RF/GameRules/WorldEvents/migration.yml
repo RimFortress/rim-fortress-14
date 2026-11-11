@@ -284,19 +284,3 @@
       MobGoldCrab: 50
   - type: NotificationRule
     proto: OreCrabMigration
-
-# Raids
-- type: entity
-  id: Raid
-  parent: BaseWorldRule
-  categories: [ HideSpawnMenu ]
-  components:
-  - type: WorldRule
-    startOffset: 900 #15 min
-    cost: 75
-  - type: MigrationRule
-    spawn:
-      Raider: 45
-    #task: Raid TODO
-  - type: NotificationRule
-    proto: Raid

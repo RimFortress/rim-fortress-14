@@ -1,0 +1,5 @@
+- type: !PartialOnly entity
+  id: CryoPod
+  components:
+  - type: PathTags
+    tags: [Climbable]

@@ -181,7 +181,8 @@ public sealed partial class NpcJobsSystem : EntitySystem
             return;
         }
 
-        foreach (var uid in _ownership.GetOwned(ent.Owner))
+        // The pops of the player are owned by its settlements.
+        foreach (var uid in _ownership.GetOwnedRecursively(ent.Owner))
         {
             if (TryComp(uid, out NpcJobSettingsComponent? comp))
                 SetJobPriority(new(uid, comp), job.Id, ent.Comp.MaxPriority);

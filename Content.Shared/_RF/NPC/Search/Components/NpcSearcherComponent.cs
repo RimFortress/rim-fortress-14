@@ -68,13 +68,18 @@ public sealed partial class NpcSearcherComponent : Component
         /// mirroring the "positive total required to be in the result"
         /// rule the pipeline already applies everywhere else.
         /// </summary>
+        /// <returns>
+        /// 1 if the candidate has got into the result, -1 if it has left it, and 0 if it is in it or out of it as it was.
+        /// </returns>
         [Access(typeof(SharedNpcSearcherSystem))]
-        public void Upsert(EntityUid uid, float score)
+        public int Upsert(EntityUid uid, float score)
         {
-            if (_scores.TryGetValue(uid, out var old))
+            var was = _scores.TryGetValue(uid, out var old);
+
+            if (was)
             {
                 if (MathHelper.CloseToPercent(old, score, 0.01f))
-                    return; // no actual change - don't invalidate the cache for nothing
+                    return 0; // no actual change - don't invalidate the cache for nothing
 
                 _byScore.Remove((old, uid));
             }
@@ -88,19 +93,24 @@ public sealed partial class NpcSearcherComponent : Component
             }
 
             _cache = null;
+
+            var now = score > 0f;
+            return was == now ? 0 : now ? 1 : -1;
         }
 
         /// <summary>
         /// Removes a candidate from the result, if present.
         /// </summary>
+        /// <returns>True, if the candidate was in the result.</returns>
         [Access(typeof(SharedNpcSearcherSystem))]
-        public void Remove(EntityUid uid)
+        public bool Remove(EntityUid uid)
         {
             if (!_scores.Remove(uid, out var score))
-                return;
+                return false;
 
             _byScore.Remove((score, uid));
             _cache = null;
+            return true;
         }
 
         private sealed class ScoreComparer : IComparer<(float Score, EntityUid Uid)>

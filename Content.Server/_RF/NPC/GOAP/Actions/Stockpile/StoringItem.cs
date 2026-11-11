@@ -4,7 +4,6 @@ using Content.Server._RF.NPC.Search.Systems;
 using Content.Server._RF.NPC.Systems;
 using Content.Server.Hands.Systems;
 using Content.Server.Interaction;
-using Content.Server.NPC.Pathfinding;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Systems;
@@ -52,22 +51,17 @@ public sealed partial class StoringItem : BaseGoapAction<StoringItem>
     [DataField]
     public StateKey<EntityUid> StoringCrateKey = "StoringCrate";
 
-    /// <summary>
-    /// Where the pathfinding result will be stored (if applicable). This gets removed after execution.
-    /// </summary>
-    [DataField]
-    public StateKey<PathResultEvent> PathfindKey = "MovementPathfinding";
 }
 
 public sealed partial class StoringItemGoapActionSystem : GoapActionSystem<StoringItem>
 {
-    [Dependency] private InteractionSystem _interaction = default!;
-    [Dependency] private NpcSearcherSystem _searcher = default!;
-    [Dependency] private StockpileSystem _stockpile = default!;
-    [Dependency] private NpcTimingSystem _npcTiming = default!;
-    [Dependency] private MoveToActionSystem _moveTo = default!;
-    [Dependency] private PickupActionSystem _pickup = default!;
-    [Dependency] private HandsSystem _hands = default!;
+    [Dependency] private InteractionSystem _interaction = null!;
+    [Dependency] private NpcSearcherSystem _searcher = null!;
+    [Dependency] private StockpileSystem _stockpile = null!;
+    [Dependency] private NpcTimingSystem _npcTiming = null!;
+    [Dependency] private MoveToActionSystem _moveTo = null!;
+    [Dependency] private PickupActionSystem _pickup = null!;
+    [Dependency] private HandsSystem _hands = null!;
 
     [Dependency] private EntityQuery<EntityStorageComponent> _storageQuery;
     [Dependency] private EntityQuery<StockpileContentComponent> _contentQuery;
@@ -76,7 +70,6 @@ public sealed partial class StoringItemGoapActionSystem : GoapActionSystem<Stori
     {
         Remove(ent, action.StoringCoordinatesKey);
         Remove(ent, action.StoringCrateKey);
-        Remove(ent, action.PathfindKey);
 
         if (!TryGet(ent, action.TargetKey, out var target))
             return false;
@@ -131,8 +124,8 @@ public sealed partial class StoringItemGoapActionSystem : GoapActionSystem<Stori
 
         Remove(ent, action.StoringCoordinatesKey);
         Remove(ent, action.StoringCrateKey);
-        Remove(ent, action.PathfindKey);
         NpcTimingSystem.ClearQueue(ent);
+        _moveTo.Stop(ent);
     }
 
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, StoringItem action)
@@ -150,7 +143,7 @@ public sealed partial class StoringItemGoapActionSystem : GoapActionSystem<Stori
 
         if (!TryGet(ent, GoapState.ActiveHandEntity, out var held) || held != item)
         {
-            var move = _moveTo.Move(ent, this, Transform(item).Coordinates, GoapState.InteractRange);
+            var move = _moveTo.Move(ent, this, item, GoapState.InteractRange);
 
             if (move != GoapActionResult.Finished)
                 return move;
@@ -178,7 +171,7 @@ public sealed partial class StoringItemGoapActionSystem : GoapActionSystem<Stori
 
         var coords = Transform(crate).Coordinates;
 
-        var result = _moveTo.Move(ent, this, coords, GoapState.InteractRange);
+        var result = _moveTo.Move(ent, this, crate, GoapState.InteractRange);
 
         if (result != GoapActionResult.Finished)
             return result;

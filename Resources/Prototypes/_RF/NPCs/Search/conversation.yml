@@ -1,7 +1,7 @@
 - type: searchQuery
   id: ConversationInviter
   query: !type:EngagementInvites
-    dataset: BasicConversationEngagements
+    dataset: BasicConversations
   filters:
   - !type:IsAlive
   - !type:IsFriendly

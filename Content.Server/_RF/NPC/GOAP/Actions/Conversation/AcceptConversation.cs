@@ -1,4 +1,5 @@
 using Content.Server._RF.NPC.Search.Systems;
+using Content.Shared._RF.Conversation.Components;
 using Content.Shared._RF.Conversation.Systems;
 using Content.Shared._RF.NPC.Engagement.Systems;
 using Content.Shared._RF.NPC.GOAP;
@@ -29,6 +30,14 @@ public sealed partial class AcceptConversationActionSystem : GoapActionSystem<Ac
 
     protected override bool ActionStartup(Entity<GoapComponent> ent, AcceptConversation action)
     {
+        // An agent talks in one conversation: the actor of a conversation is one per agent, and a second conversation would take it
+        // away from the first, which is then torn down as invalid.
+        if (HasComp<ConversationActorComponent>(ent))
+        {
+            CreateDump("agent already in conversation");
+            return false;
+        }
+
         var results = _npcSearcher.GetResults(ent, ent.Comp.State, action.Query);
 
         if (results.Count == 0)
@@ -48,6 +57,9 @@ public sealed partial class AcceptConversationActionSystem : GoapActionSystem<Ac
 
             accepted = true;
             CreateDump($"accepted invite from {ToPrettyString(inviter)}");
+
+            // One invitation is accepted, the others wait: they are not for an agent that is in a conversation.
+            break;
         }
 
         if (!accepted)

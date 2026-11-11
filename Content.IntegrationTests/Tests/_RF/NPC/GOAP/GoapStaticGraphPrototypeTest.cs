@@ -127,8 +127,6 @@ public sealed class GoapStaticGraphPrototypeTest : GameTest
     - !type:MoveTo
       rangeKey: MeleeRange
       stopOnLineOfSight: true
-    - !type:Juke
-      jukeType: Away
     - !type:Gun
       targetKey: Query/AttackTarget
       removeCombatMode: false
@@ -147,7 +145,6 @@ public sealed class GoapStaticGraphPrototypeTest : GameTest
       targetKey: Query/AttackTarget
     - !type:MoveTo
       rangeKey: MeleeRange
-    - !type:Juke
     - !type:Melee
       targetKey: Query/AttackTarget
       removeCombatMode: false
@@ -164,7 +161,6 @@ public sealed class GoapStaticGraphPrototypeTest : GameTest
       targetKey: Query/AttackTarget
     - !type:MoveTo
       rangeKey: MeleeRange
-    - !type:Juke
     - !type:Melee
       targetKey: Query/AttackTarget
       removeCombatMode: false
@@ -243,7 +239,7 @@ public sealed class GoapStaticGraphPrototypeTest : GameTest
     {
         var graph = _goap.GetStaticGraph("TestCombatGraph");
 
-        var expectedActionCounts = new[] { 1, 1, 4, 4, 5, 4 };
+        var expectedActionCounts = new[] { 1, 1, 4, 3, 4, 3 };
         var expectedPreconditionCounts = new[] { 1, 1, 4, 3, 3, 2 };
         var expectedEffectCounts = new[] { 2, 2, 1, 1, 1, 1 };
 

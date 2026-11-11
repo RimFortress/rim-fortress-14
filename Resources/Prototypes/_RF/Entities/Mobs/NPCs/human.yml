@@ -41,11 +41,52 @@
     - RandomVisualRaid4Gear
   - type: InputMover
   - type: MobMover
-  - type: HTN
-    rootTask:
-      task: IdleCompound
+  - type: CombatMode
+    isInCombatMode: true
+  - type: Goap
+    rootTask: RaiderIdle
+    state:
+      Retreating: false
+      # The raid camps when it has come, see the Camp phase of the Raid, and finishes the residents off when it is sure of the victory.
+      Camping: false
+      Executing: false
+      # How far from the middle of the camp a raider goes at most, and how far it wanders from where it stands.
+      CampRange: 5.0
+      CampWanderRange: 4.0
+      # Trained to treat, see SquadMedic: the purchases of medicine make a raider one.
+      FieldMedic: false
+      # How far a raider looks for the way out when it retreats.
+      RetreatRange: 150.0
+      # How close to the resident it goes to a raider gets before it looks for the enemies to fight.
+      RaidApproachRange: 15.0
+      # How close to the leader of the squad a member stays.
+      SquadFollowRange: 6.0
+      # How far from the casualty the medic takes it out of the fire.
+      ShelterRange: 14.0
+  - type: PathProfiles
+    profiles:
+    - Walker
+    - Breacher
+  - type: UtilityAi
+    goals:
+    - RaiderAttack
+    - RaiderHold
+    - RaiderFollow
+    - RaiderEscort
+    - RaiderFollowSupport
+    - RaiderFollowMedic
+    - MedicRescue
+    - MedicStopBleeding
+    - MedicRestoreBlood
+    - MedicHealDamage
+    - FinishHealing
+    - RaiderPatientWaiting
+    - RaiderStopHealing
+    - RaiderApproach
+    - RaiderAdvance
+    - RaiderRetreat
+    - RaiderCamp
+    - RaiderExecute
   - type: NpcFactionMember
     factions:
     - Raiders
-  - type: ControllableNpc
-    goals: [] # TODO

@@ -50,7 +50,7 @@ public sealed partial class StockpileSystem : EntitySystem
 
         if (args.SenderSession.AttachedEntity is not { } owner
             || !_stockQuery.TryComp(uid, out var comp)
-            || !_ownership.HasOwner(uid, owner))
+            || !_ownership.IsOwnedBy(uid, owner))
             return;
 
         SetProtoMax(new(uid, comp), ev.ProtoId, ev.Value);
@@ -66,7 +66,7 @@ public sealed partial class StockpileSystem : EntitySystem
 
         if (args.SenderSession.AttachedEntity is not { } owner
             || !_stockQuery.TryComp(uid, out var comp)
-            || !_ownership.HasOwner(uid, owner))
+            || !_ownership.IsOwnedBy(uid, owner))
             return;
 
         if (_net.IsClient)
@@ -86,9 +86,9 @@ public sealed partial class StockpileSystem : EntitySystem
 
         if (args.SenderSession.AttachedEntity is not { } owner
             || !_stockQuery.TryComp(supplied, out var suppliedComp)
-            || !_ownership.HasOwner(supplied, owner)
+            || !_ownership.IsOwnedBy(supplied, owner)
             || !_stockQuery.TryComp(supplier, out var supplierComp)
-            || !_ownership.HasOwner(supplier, owner))
+            || !_ownership.IsOwnedBy(supplier, owner))
             return;
 
         AddSuppliedStock(new(supplier, supplierComp), new(supplied, suppliedComp));
@@ -102,9 +102,9 @@ public sealed partial class StockpileSystem : EntitySystem
 
         if (args.SenderSession.AttachedEntity is not { } owner
             || !_stockQuery.TryComp(supplied, out var suppliedComp)
-            || !_ownership.HasOwner(supplied, owner)
+            || !_ownership.IsOwnedBy(supplied, owner)
             || !_stockQuery.TryComp(supplier, out var supplierComp)
-            || !_ownership.HasOwner(supplier, owner))
+            || !_ownership.IsOwnedBy(supplier, owner))
             return;
 
         RemoveSuppliedStock(new(supplier, supplierComp), new(supplied, suppliedComp));

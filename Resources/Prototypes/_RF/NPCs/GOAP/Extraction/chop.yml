@@ -7,9 +7,8 @@
     - Pulled == false
     - Query/Axe != null
     actions:
-    - !type:EntityCoords
-      targetKey: Query/Axe
     - !type:MoveTo
+      targetEntityKey: Query/Axe
       rangeKey: InteractRange
     - !type:Pickup
       targetKey: Query/Axe
@@ -22,9 +21,8 @@
     - AxePickedUp == true
     - Query/ChopTarget != null
     actions:
-    - !type:EntityCoords
-      targetKey: Query/ChopTarget
     - !type:MoveTo
+      targetEntityKey: Query/ChopTarget
       rangeKey: InteractRange
     - !type:Melee
       targetKey: Query/ChopTarget

@@ -1,0 +1,193 @@
+# What a raider can do. It has no chores of a settler.
+- type: goapCompound
+  id: RaiderIdle
+  tasks:
+  - proto: Utility
+  - proto: Door
+  - proto: Climb
+  - proto: Breach
+  - proto: Pickup
+  - proto: Combat
+  - proto: Healing
+  - proto: Rescue
+  - proto: RaiderHold
+  - proto: RaiderFollow
+  - proto: RaiderEscort
+  - proto: RaiderApproach
+  - proto: RaiderAdvance
+  - proto: RaiderRetreat
+  - proto: RaiderCamp
+  - proto: RaiderExecute
+
+- type: goapCompound
+  id: RaiderHold
+  tasks:
+  - preconditions:
+    - Engagement/RaidSquad/Var/stance < 0.5
+    actions:
+    - !type:WaitWhile
+      conditions:
+      - Engagement/RaidSquad/Var/stance < 0.5
+    effects:
+      RaiderHeld: true
+
+- type: goapCompound
+  id: RaiderFollow
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    - Engagement/RaidSquad/Role/SquadLeader != null
+    actions:
+    - !type:MoveTo
+      targetEntityKey: Engagement/RaidSquad/Role/SquadLeader
+      rangeKey: SquadFollowRange
+      query: Approach
+    effects:
+      RaiderFollowed: true
+
+# Stays with the breacher of the squad, wherever it goes, and covers it: the fight is up to the goals of the raiders.
+- type: goapCompound
+  id: RaiderEscort
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    - Engagement/RaidSquad/Role/SquadBreacher != null
+    actions:
+    - !type:MoveTo
+      targetEntityKey: Engagement/RaidSquad/Role/SquadBreacher
+      rangeKey: SquadFollowRange
+      query: Approach
+    effects:
+      RaiderEscorted: true
+
+- type: goapCompound
+  id: RaiderApproach
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    - Query/RaidObjective != null
+    actions:
+    - !type:MoveTo
+      targetEntityKey: Query/RaidObjective
+      rangeKey: RaidApproachRange
+      query: Approach
+    effects:
+      RaiderApproached: true
+
+- type: goapCompound
+  id: RaiderAdvance
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    actions:
+    - !type:MoveTo
+      targetKey: Engagement/RaidForce/Owner/SettlementTarget
+      rangeKey: IdleRange
+    effects:
+      RaiderAdvanced: true
+
+- type: goapCompound
+  id: RaiderRetreat
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    actions:
+    - !type:PickAccessible
+      rangeKey: RetreatRange
+      query: Retreat
+    - !type:MoveTo
+    effects:
+      RaiderRetreated: true
+
+# The camp of the raid, see the Camp phase: the raider keeps to the place where the raid has come (CampTarget), and walks about a little
+# near it. It goes back to the camp if it is further than CampRange from it, then it wanders off at most CampWanderRange.
+- type: goapCompound
+  id: RaiderCamp
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    - Engagement/RaidForce/Owner/CampTarget != null
+    actions:
+    - !type:MoveTo
+      targetKey: Engagement/RaidForce/Owner/CampTarget
+      rangeKey: CampRange
+      sprint: false
+    - !type:PickAccessible
+      rangeKey: CampWanderRange
+    - !type:MoveTo
+      rangeKey: InteractRange
+      sprint: false
+    - !type:RandomTime
+      key: IdleTime
+      minSec: 3
+      maxSec: 9
+    - !type:Wait
+      timeKey: IdleTime
+    effects:
+      RaiderCamped: true
+
+# Finishes off a resident that is down (or hurts one that stands), it is the same as Combat but the target can be critical: the raid
+# does that only when it is sure of the victory, see the Finish phase.
+- type: goapCompound
+  id: RaiderExecute
+  tasks:
+  - preconditions:
+    - GunFound == true
+    - WeaponPickedUp == true
+    - Query/RaidFinishTarget != null
+    actions:
+    - !type:MoveTo
+      targetEntityKey: Query/RaidFinishTarget
+      rangeKey: MeleeRange
+      stopOnLineOfSight: true
+    - !type:Gun
+      targetKey: Query/RaidFinishTarget
+      targetState: Critical
+      removeCombatMode: false
+    effects:
+      TargetExecuted: true
+
+  - preconditions:
+    - MeleeFound == true
+    - WeaponPickedUp == true
+    - Query/RaidFinishTarget != null
+    actions:
+    - !type:Wield
+      targetState: true
+    - !type:MoveTo
+      targetEntityKey: Query/RaidFinishTarget
+      rangeKey: MeleeRange
+    - !type:Melee
+      targetKey: Query/RaidFinishTarget
+      targetState: Critical
+      removeCombatMode: false
+      costMultiplier: 4
+    effects:
+      TargetExecuted: true
+
+  - preconditions:
+    - WeaponTarget == null
+    - Query/RaidFinishTarget != null
+    actions:
+    - !type:MoveTo
+      targetEntityKey: Query/RaidFinishTarget
+      rangeKey: MeleeRange
+    - !type:Melee
+      targetKey: Query/RaidFinishTarget
+      targetState: Critical
+      removeCombatMode: false
+      costMultiplier: 100
+    effects:
+      TargetExecuted: true

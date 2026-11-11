@@ -1,0 +1,415 @@
+# Goes where it is possible to go. How it is searched for is up to the query, see queries.yml. It does not go through lava, liquid plasma and chasms, or through what is blocked, and
+# does not like water, ice and the tiles next to the lava.
+# The rules that the walkers have in common: the doors, what is climbed onto, the bodies that are gone around, lava, water. What
+# is blocked is up to the profile itself, see Walker and Breacher.
+- type: pathProfile
+  id: WalkerBase
+  abstract: true
+  rules:
+  # The raiders keep out of reach of the residents of the settlement, the stronger a resident is the more: they come to the settlement
+  # by the way that is covered the least, round the strong, and break through where it is weak. The residents are where they are when
+  # the path is searched for, see the tag, and the places that are covered are only counted by how far they are, not by what is in
+  # the way. A resident counts for how strong it is, and one that is down (or dead) does not count.
+  - when:
+    - !type:TagInfluence
+      tag: Resident
+      weight:
+      - !type:PrototypeCurve
+        preset: FighterPower
+      moreThan: 0
+    requires:
+    - Engagement/RaidForce/In == true
+    cost:
+    - var: influence
+    - mul: [float: 15]
+  # A place to take cover is where the residents do not see: the nodes they can shoot at cost the more, the stronger they are.
+  - when:
+    - !type:TagInfluence
+      tag: Resident
+      sight: true
+      weight:
+      - !type:PrototypeCurve
+        preset: FighterPower
+      moreThan: 0
+    - !type:Query
+      id: Shelter
+    requires:
+    - Engagement/RaidForce/In == true
+    cost:
+    - var: influence
+    - mul: [float: 30]
+  # The doors. A closed door that opens by itself is no trouble. The agent that only looks for a place to wander to does
+  # not go through a door that has to be opened or pried. A door that cannot be gone through, or has to be pried and there is nothing
+  # to pry it with, is up to the profile, see Walker and Breacher.
+  - when:
+    - !type:HasTag
+      tag: DoorNeedsOpening
+    - !type:Query
+      id: Wander
+    cost: [float: 10000]
+  - when:
+    - !type:HasTag
+      tag: DoorNeedsPry
+    - !type:Query
+      id: Wander
+    cost: [float: 10000]
+  # A door that has to be opened by hand: the agent stops short of it, opens it and goes on.
+  - when:
+    - !type:HasTag
+      tag: DoorNeedsOpening
+    - !type:Query
+      id: Wander
+      invert: true
+    cost: [float: 4]
+    goal:
+      id: DoorOpen
+      targetKey: DoorPoint
+      rangeKey: InteractRange
+      entityTag: Door
+      entityKey: DoorTarget
+  # A door that has to be pried is pried if the agent has something to pry it with.
+  - when:
+    - !type:HasTag
+      tag: DoorNeedsPry
+    - !type:Query
+      id: Wander
+      invert: true
+    requires:
+    - Query/Crowbar != null
+    cost: [float: 8]
+    goal:
+      id: DoorPry
+      targetKey: DoorPoint
+      rangeKey: InteractRange
+      entityTag: Door
+      entityKey: DoorTarget
+  # A door that stays open is closed after the agent has gone through, if the agent closes the doors and is not in the combat
+  # mode: it is on an order then, and it does not stop for the doors.
+  - when:
+    - !type:HasTag
+      tag: DoorCanClose
+    - !type:Query
+      id: Wander
+      invert: true
+    requires:
+    - CloseDoors == true
+    - CombatMode == false
+    cost: [float: 1]
+    goal:
+      id: DoorClose
+      when: After
+      targetKey: DoorPoint
+      rangeKey: InteractRange
+      entityTag: Door
+      entityKey: DoorTarget
+  # A path that goes over what can be climbed onto has a goal at it: to climb.
+  - when:
+    - !type:HasTag
+      tag: Climbable
+    - !type:Blocked
+    - !type:Query
+      id: Wander
+      invert: true
+    requires:
+    - Climbing == false
+    cost: [float: 2]
+    goal:
+      id: Climb
+      targetKey: ClimbPoint
+      rangeKey: InteractRange
+      entityTag: Climbable
+      entityKey: ClimbTarget
+  # Bodies are gone around at a distance, the agent has a size and the path knows nothing of it.
+  - when:
+    - !type:TagInfluence
+      tag: Obstacle
+      moreThan: 0
+    cost:
+    - var: influence
+    - mul: [float: 3]
+  # What can be climbed onto is an obstacle like the others for the one that does not climb.
+  - when:
+    - !type:TagInfluence
+      tag: Climbable
+      moreThan: 0.55
+    - !type:Query
+      id: Wander
+    cost: [float: 10000]
+  # Where an agent burns or falls the path does not go, the cost is more than the profile allows. It does not go by the
+  # edge of it either: the tiles work when the body is over them, and an agent has a size. A node is at the edge if the
+  # influence of the tag is more than that, it is one on the tile itself.
+  - when:
+    - !type:TagInfluence
+      tag: Lava
+      moreThan: 0.7
+    cost: [float: 10000]
+  - when:
+    - !type:TagInfluence
+      tag: Chasm
+      moreThan: 0.4
+    cost: [float: 10000]
+  - when:
+    - !type:TagInfluence
+      tag: LiquidPlasma
+      moreThan: 0.4
+    cost: [float: 10000]
+  # The tiles next to the lava cost more, the closer to it the more: the heat is felt, and a step to the side is the end.
+  - when:
+    - !type:TagInfluence
+      tag: Lava
+      moreThan: 0
+    cost:
+    - var: influence
+    - mul: [float: 4]
+  - when:
+    - !type:HasTag
+      tag: Water
+    cost: [float: 5]
+  # To wander into the water is not worth it, it is only gone through when there is a reason.
+  - when:
+    - !type:HasTag
+      tag: Water
+    - !type:Query
+      id: Wander
+    cost: [float: 10000]
+  # The ice is slippery, but it is not a reason to go far around.
+  - when:
+    - !type:HasTag
+      tag: Ice
+    cost: [float: 0.5]
+  # A place to run to is at home: the farther from the settlement a node is, the more it costs, so the one that runs from the enemies runs
+  # to the settlement (to its own people), and not away into the wilds, where it is hunted down.
+  - when:
+    - !type:TagInfluence
+      tag: Settlement
+    - !type:Or
+      conditions:
+      - !type:Query
+        id: Flee
+      - !type:Query
+        id: FleeRoute
+    cost:
+    - var: influence
+    - mul: [float: -10]
+    - add: [float: 10]
+  # A way out goes round the settlements: the closer to one, the more a node costs.
+  - when:
+    - !type:TagInfluence
+      tag: Settlement
+      moreThan: 0
+    - !type:Query
+      id: Retreat
+    cost:
+    - var: influence
+    - mul: [float: 10]
+
+# What is blocked is not gone through.
+- type: pathProfile
+  id: Walker
+  parent: WalkerBase
+  rules:
+  # What is blocked is not gone through. What can be climbed onto is, unless the place is only to wander to: an agent that
+  # is not going anywhere in particular does not climb the tables.
+  - when:
+    - !type:Blocked
+    - !type:Or
+      conditions:
+      - !type:HasTag
+        tag: Climbable
+        invert: true
+      - !type:Query
+        id: Wander
+    # The doors are gone through by their own rules, see below.
+    - !type:HasTag
+      tag: Door
+      invert: true
+    cost: [float: 10000]
+  # Where the agent does not fit between the bodies the path is not made, however close it is to the target. What is
+  # climbed onto is on the tile of the body itself, and it is not a place to avoid.
+  - when:
+    - !type:TagInfluence
+      tag: Obstacle
+      moreThan: 0.55
+    - !type:HasTag
+      tag: Climbable
+      invert: true
+    cost: [float: 10000]
+  # A door that cannot be gone through is not, and neither is one that has to be pried when there is nothing to pry it with.
+  - when:
+    - !type:HasTag
+      tag: DoorBlocked
+    cost: [float: 10000]
+  - when:
+    - !type:HasTag
+      tag: DoorNeedsPry
+    - !type:Query
+      id: Wander
+      invert: true
+    requires:
+    - Query/Crowbar == null
+    cost: [float: 10000]
+
+# What is blocked is broken through, if the agent is able to destroy it with what it deals, and it costs as much as it takes. It is
+# for the agents that are to get to the place at any price, such as the raiders: the profile comes after Walker, so it is only the way
+# when there is no way round. The agent stops short of the wall and breaks it, see the Breach goal, and the path is searched for
+# again. A place that is only to wander to is not broken through, and what cannot be destroyed is not.
+# In a squad that has a breacher only the breacher breaks, the others wait for the way to be made, and in one that has none anybody
+# does.
+- type: pathProfile
+  id: Breacher
+  parent: WalkerBase
+  conditions:
+  - !type:Or
+    conditions:
+    - Engagement/RaidSquad/Role/SquadBreacher/In == true
+    - Engagement/RaidSquad/Role/SquadBreacher == null
+  rules:
+  - when:
+    - !type:Blocked
+    - !type:Or
+      conditions:
+      - !type:HasTag
+        tag: Climbable
+        invert: true
+      - !type:Query
+        id: Wander
+    - !type:HasTag
+      tag: Door
+      invert: true
+    - !type:Or
+      conditions:
+      - !type:CanDestroy
+        invert: true
+      - !type:CanDestroy
+        moreThan: 90
+      - !type:Query
+        id: Wander
+    cost: [float: 10000]
+  - when:
+    - !type:Blocked
+    - !type:HasTag
+      tag: Climbable
+      invert: true
+    - !type:HasTag
+      tag: Door
+      invert: true
+    - !type:CanDestroy
+      lessThan: 90
+    - !type:Query
+      id: Wander
+      invert: true
+    cost:
+    - var: destroyTime
+    - mul: [float: 0.5]
+    goal:
+      id: Breach
+      targetKey: BreachPoint
+      rangeKey: MeleeRange
+      entityKey: BreachTarget
+      # What blocks the node: solid, and not something that cannot be destroyed.
+      entityConditions:
+      - !type:Solid
+      - !type:CanBeDestroyed
+  # Where the agent does not fit between the bodies the path is not made, unless it breaks them. The place next to a body that can
+  # be broken is not that: the agent that has broken through a wall comes out of it onto the tiles that are right next to the wall,
+  # where the influence is large, and those cost the path through the wall more than it can have (a price of 10000 would be paid
+  # for every step), so such a place costs a lot, as much as it is close to the bodies, but not more than the path can have: the breaker
+  # goes through it only when there is nothing cheaper (a door, a gap), and the place to only wander to is not gone to.
+  - when:
+    - !type:TagInfluence
+      tag: Obstacle
+      moreThan: 0.55
+    - !type:HasTag
+      tag: Climbable
+      invert: true
+    - !type:Query
+      id: Wander
+    cost: [float: 10000]
+  - when:
+    - !type:TagInfluence
+      tag: Obstacle
+      moreThan: 0.55
+    - !type:HasTag
+      tag: Climbable
+      invert: true
+    - !type:Or
+      conditions:
+      - !type:CanDestroy
+        invert: true
+      - !type:CanDestroy
+        moreThan: 90
+    - !type:Query
+      id: Wander
+      invert: true
+    cost:
+    - var: influence
+    - mul: [float: 1000]
+  # A door that cannot be gone through, or has to be pried when there is nothing to pry it with, is broken the same way as a wall, if
+  # the agent is able to, the door that has a crowbar to pry it is pried (see WalkerBase) and not broken.
+  - when:
+    - !type:HasTag
+      tag: DoorBlocked
+    - !type:Or
+      conditions:
+      - !type:CanDestroy
+        invert: true
+      - !type:CanDestroy
+        moreThan: 90
+      - !type:Query
+        id: Wander
+    cost: [float: 10000]
+  - when:
+    - !type:HasTag
+      tag: DoorNeedsPry
+    - !type:Query
+      id: Wander
+      invert: true
+    - !type:Or
+      conditions:
+      - !type:CanDestroy
+        invert: true
+      - !type:CanDestroy
+        moreThan: 90
+    requires:
+    - Query/Crowbar == null
+    cost: [float: 10000]
+  - when:
+    - !type:HasTag
+      tag: DoorBlocked
+    - !type:CanDestroy
+      lessThan: 90
+    - !type:Query
+      id: Wander
+      invert: true
+    cost:
+    - var: destroyTime
+    - mul: [float: 0.5]
+    goal:
+      id: Breach
+      targetKey: BreachPoint
+      rangeKey: MeleeRange
+      entityKey: BreachTarget
+      entityConditions:
+      - !type:Solid
+      - !type:CanBeDestroyed
+  - when:
+    - !type:HasTag
+      tag: DoorNeedsPry
+    - !type:CanDestroy
+      lessThan: 90
+    - !type:Query
+      id: Wander
+      invert: true
+    requires:
+    - Query/Crowbar == null
+    cost:
+    - var: destroyTime
+    - mul: [float: 0.5]
+    goal:
+      id: Breach
+      targetKey: BreachPoint
+      rangeKey: MeleeRange
+      entityKey: BreachTarget
+      entityConditions:
+      - !type:Solid
+      - !type:CanBeDestroyed

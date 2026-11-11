@@ -1,3 +1,4 @@
+using Content.Shared._RF.NPC.Engagement.Components;
 using Content.Shared._RF.NPC.Engagement.Prototypes;
 using Content.Shared._RF.NPC.Engagement.Systems;
 using JetBrains.Annotations;
@@ -10,11 +11,8 @@ namespace Content.Shared._RF.NPC.Engagement;
 /// reached its <see cref="EngagementRolePrototype.MinCount"/> for the first time.
 /// </summary>
 /// <param name="Engagement">The situation entity.</param>
-/// <param name="Kind">The situation's prototype.</param>
 [PublicAPI]
-public readonly record struct EngagementStarted(
-    EntityUid Engagement,
-    ProtoId<EngagementPrototype> Kind);
+public readonly record struct EngagementStarted(EntityUid Engagement);
 
 /// <summary>
 /// Raised on the joining actor and on the situation entity when a role is occupied,
@@ -81,3 +79,14 @@ public readonly record struct EngagementInviteRemoved(
     EntityUid Engagement,
     EntityUid Inviter,
     EntityUid Invited);
+
+/// <summary>
+/// Broadcast when something about who is in a situation (or is invited to it) has changed: someone has joined or left, has been invited
+/// or not any more, the situation has started or is over. It is for those who depend on it as a whole, and do not care which of these
+/// it was, such as the keys of the domains of the state of an agent, see <c>EngagementGoapDomains</c>.
+/// </summary>
+/// <param name="Engagement">The situation entity.</param>
+/// <param name="Extra1">Another entity that it is about, such as the one who has left.</param>
+/// <param name="Extra2">And another one.</param>
+[PublicAPI, ByRefEvent]
+public readonly record struct EngagementChanged(EntityUid Engagement, EntityUid? Extra1 = null, EntityUid? Extra2 = null);

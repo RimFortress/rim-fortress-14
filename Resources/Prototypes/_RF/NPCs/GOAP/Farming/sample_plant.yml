@@ -4,9 +4,8 @@
   - preconditions:
     - Query/PlantSampleTaker != null
     actions:
-    - !type:EntityCoords
-      targetKey: Query/PlantSampleTaker
     - !type:MoveTo
+      targetEntityKey: Query/PlantSampleTaker
       rangeKey: InteractRange
     - !type:Pickup
       targetKey: Query/PlantSampleTaker
@@ -17,9 +16,8 @@
     - Query/SamplePlant != null
     - PlantSamplePickedUp == true
     actions:
-    - !type:EntityCoords
-      targetKey: Query/SamplePlant
     - !type:MoveTo
+      targetEntityKey: Query/SamplePlant
       rangeKey: InteractRange
     - !type:InteractWith
       targetKey: Query/SamplePlant

@@ -1,62 +1,54 @@
-- type: dataset
-  id: BasicConversationEngagements
-  values:
-  - BaseDialogEngagement
-  - MorningGreeting
-  - SmalltalkRejected
-  - SmalltalkIgnored
-  - SmalltalkRude
-  - ThankForHealing
-  - CheckOnPatient
-
-# Conversations
-
-- type: engagement
-  id: BaseDialogEngagement
-  roles:
-  - BaseDialogInitiator
-  - BaseDialogResponder
-
-- type: engagement
-  id: MorningGreeting
-  roles:
-  - MorningGreetingInitiator
-  - MorningGreetingResponder
-
-- type: engagement
-  id: SmalltalkRejected
-  roles:
-  - SmalltalkRejectedInitiator
-  - SmalltalkRejectedResponder
-
-- type: engagement
-  id: SmalltalkIgnored
-  roles:
-  - SmalltalkIgnoredInitiator
-  - SmalltalkIgnoredResponder
-
-- type: engagement
-  id: SmalltalkRude
-  roles:
-  - SmalltalkRudeInitiator
-  - SmalltalkRudeResponder
-
-- type: engagement
-  id: ThankForHealing
-  roles:
-  - ThankForHealingInitiator
-  - BaseDialogResponder
-
-- type: engagement
-  id: CheckOnPatient
-  roles:
-  - CheckOnPatientInitiator
-  - CheckOnPatientResponder
+# The kinds of situations are the prototypes of entities that have the Engagement component: the roles, whether the situation is
+# closed when a role has fewer than it needs, and how long the invitations wait. Any other component that a kind needs is here too.
+# A situation that is owned (by an event, for the raiders, say) lives as long as the owner does, and is gone when the owner lets it go.
+- type: entity
+  id: BaseEngagement
+  abstract: true
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Engagement
+  - type: DespawnWithOwner
 
 # Healing
 
-- type: engagement
+- type: entity
   id: Healing
-  roles:
-  - Doctor
-  - HealedFriened
+  parent: BaseEngagement
+  components:
+  - type: Engagement
+    roles:
+    - Doctor
+    - HealedFriened
+
+# Raids
+
+# All the raiders of a raid.
+- type: entity
+  id: RaidForce
+  parent: BaseEngagement
+  components:
+  - type: Engagement
+    roles:
+    - Raider
+
+# The squad of a raid: there are as many of them as the raiders need, see PlaceInGroup. It is not over when it has no leader.
+- type: entity
+  id: RaidSquad
+  parent: BaseEngagement
+  components:
+  - type: Engagement
+    dissolveInvalid: false
+    roles:
+    - SquadLeader
+    # Before the others: when a participant could take it, it takes the medic, which only some can, and then the breacher, which
+    # only some can as well. The medic comes first, there is one for a squad and it is the rarer.
+    - SquadMedic
+    - SquadBreacher
+    - SquadAssault
+    - SquadSupport
+  # The numbers of the squad (its power, the ratio and the stance, see MeasureGroups) and the state that keeps what only the
+  # squad has: the share of the targets that it is given, see AssignGroupTargets.
+  - type: MathVariables
+  - type: Goap
+    rootTask: Empty
+    enabled: false

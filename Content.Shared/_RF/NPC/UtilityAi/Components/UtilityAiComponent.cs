@@ -39,4 +39,23 @@ public sealed partial class UtilityAiComponent : Component
 
     [ViewVariables]
     public readonly Dictionary<ProtoId<UtilityAiGoalPrototype>, int> Penalties = new();
+
+    /// <summary>
+    /// The goal that was put aside for another one, see <c>SuspendGoal</c>. It is set again when the other one is
+    /// finished.
+    /// </summary>
+    [ViewVariables]
+    public ProtoId<UtilityAiGoalPrototype>? SuspendedGoal;
+
+    /// <summary>
+    /// The values of the keys of the <see cref="SuspendedGoal"/> at the time it was put aside.
+    /// </summary>
+    [ViewVariables]
+    public readonly Dictionary<string, object> SuspendedKeys = new();
+
+    /// <summary>
+    /// The plan is being given up on purpose, the goal it was for is not finished by that.
+    /// </summary>
+    [ViewVariables]
+    public bool Suspending;
 }

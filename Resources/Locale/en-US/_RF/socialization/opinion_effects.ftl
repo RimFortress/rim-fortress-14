@@ -1,3 +1,6 @@
+opinion-effect-recently-attacked-name = Just attacked
+opinion-effect-recently-attacked-desc = They hit me just now, and may hit me again. I need to get away from them.
+
 opinion-effect-attacked-name = Attacked
 opinion-effect-attacked-desc = Still seething over the unprovoked attack. Memories of this violence are still fresh in my mind.
 

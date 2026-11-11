@@ -1,0 +1,95 @@
+# Every tile with a body that does not move is the source of it. The influence is how close to such a body a node is,
+# the profiles use it to keep the path at a distance, as far as the size of the agent needs.
+- type: pathTag
+  id: Obstacle
+  influence: 0.75
+  # One next to the body and nothing at the edge of the radius, the closer to the body the node is, the worse.
+  influenceCurve:
+  - mul: [float: -1.3333]
+  - add: [float: 1]
+
+# Lava burns. The tiles next to it are not nice to walk by either, the influence is how close to the lava the node is.
+- type: pathTag
+  id: Lava
+  influence: 1
+  influenceCurve:
+  - mul: [float: -1]
+  - add: [float: 1]
+
+# What is fallen into. The influence is how close to the edge the node is, an agent that is by the edge of it gets in
+# with its body, the tiles trigger when the body is over them.
+- type: pathTag
+  id: Chasm
+  influence: 0.5
+  influenceCurve:
+  - mul: [float: -2]
+  - add: [float: 1]
+
+# Liquid plasma, as dangerous as lava.
+- type: pathTag
+  id: LiquidPlasma
+  influence: 0.5
+  influenceCurve:
+  - mul: [float: -2]
+  - add: [float: 1]
+
+- type: pathTag
+  id: Water
+
+- type: pathTag
+  id: Ice
+
+# What can be climbed onto, such as a table. The entities that have the Climbable component have it, see climbable.yml. It
+# is not an obstacle of the kind that the agents keep away from, and the influence is how close to it the node is, as of the
+# obstacle, for the profiles whose agents do not climb.
+- type: pathTag
+  id: Climbable
+  makesObstacle: false
+  influence: 0.75
+  influenceCurve:
+  - mul: [float: -1.3333]
+  - add: [float: 1]
+
+# A door. Whether it is passable, and what it takes, is in the tags of the kind of the door, see DoorPathSystem. It is not
+# an obstacle that the agents keep away from: the way to it is from the side.
+- type: pathTag
+  id: Door
+  makesObstacle: false
+
+# The door cannot be gone through: welded, bolted, or there is no way to open it.
+- type: pathTag
+  id: DoorBlocked
+
+# The door is closed and has to be pried, there is no power.
+- type: pathTag
+  id: DoorNeedsPry
+
+# The door is closed and has to be opened by hand, it does not open when it is walked into.
+- type: pathTag
+  id: DoorNeedsOpening
+
+# The door is open and stays open, it can be closed after the agent.
+- type: pathTag
+  id: DoorCanClose
+
+# Every settlement of a player is the source of it. The influence is how close to a settlement a node is, the profiles use it
+# to keep the path away from the settlements, as the ones who leave one do not want to go through another.
+- type: pathTag
+  id: Settlement
+  makesObstacle: false
+  influence: 40
+  influenceCurve:
+  - mul: [float: -0.025]
+  - add: [float: 1]
+
+# Every resident of a settlement has it. It is a dynamic tag: it is not baked into the navigation map, because the residents move, and
+# the influence on a node is made of where they are when the path is searched for. What it costs, and how much each resident counts
+# for, is up to the profiles, see the rules.
+- type: pathTag
+  id: Resident
+  dynamic: true
+  influence: 14
+  influenceCurve:
+  - div: [var: radius]
+  - mul: [float: -1]
+  - add: [float: 1]

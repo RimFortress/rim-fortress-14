@@ -1,0 +1,5 @@
+- type: !PartialOnly entity
+  id: BaseWindoorGeneric
+  components:
+  - type: PathTags
+    tags: [Door]

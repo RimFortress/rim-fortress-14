@@ -1,0 +1,140 @@
+# What the event points of a raid can buy for the raiders, on top of what each of them comes with (the base gear, see the Raider): the
+# cost is in the points, the same as the raiders themselves cost, and the gear is added to what the raider has. How the purchases are
+# grouped and how likely each is to be chosen is up to the raid. See EventBudgetSystem and the Raid. The medicine is what a field
+# medic works with, see SquadMedic: a raider that has bought any of it is trained to use it, and becomes the medic of its squad if
+# it has none yet. (The base gear of a raider may have a medkit, but a raider is not a medic for that.)
+
+- type: startingGear
+  id: RaidKitArmorGear
+  equipment:
+    outerClothing: ClothingOuterArmorBasic
+
+- type: startingGear
+  id: RaidKitHelmetGear
+  equipment:
+    head: ClothingHeadHelmetBasic
+
+- type: startingGear
+  id: RaidKitCrowbarGear
+  storage:
+    back:
+    - Crowbar
+
+- type: startingGear
+  id: RaidKitPistolGear
+  inhand:
+  - WeaponPistolMk58
+  storage:
+    back:
+    - MagazinePistol
+    - MagazinePistol
+
+- type: eventPurchase
+  id: RaidKitArmor
+  cost: 12
+  effects:
+  - !type:EquipGear
+    gear: RaidKitArmorGear
+
+- type: eventPurchase
+  id: RaidKitHelmet
+  cost: 8
+  effects:
+  - !type:EquipGear
+    gear: RaidKitHelmetGear
+
+# A crowbar is what a breacher is made of, see the squad roles.
+- type: eventPurchase
+  id: RaidKitCrowbar
+  cost: 4
+  effects:
+  - !type:EquipGear
+    gear: RaidKitCrowbarGear
+
+- type: eventPurchase
+  id: RaidKitPistol
+  cost: 25
+  effects:
+  - !type:EquipGear
+    gear: RaidKitPistolGear
+
+# Medicine. Each is carried in the bag, the same as the crowbar, and whoever buys it is a field medic (the flag of the goals).
+- type: startingGear
+  id: RaidKitBandagesGear
+  storage:
+    back:
+    - Gauze
+
+- type: startingGear
+  id: RaidKitBrutepackGear
+  storage:
+    back:
+    - Brutepack
+
+- type: startingGear
+  id: RaidKitOintmentGear
+  storage:
+    back:
+    - Ointment
+
+- type: startingGear
+  id: RaidKitBloodpackGear
+  storage:
+    back:
+    - Bloodpack
+
+- type: startingGear
+  id: RaidKitMedkitGear
+  storage:
+    back:
+    - MedkitFilled
+
+# Stops the bleeding.
+- type: eventPurchase
+  id: RaidKitBandages
+  cost: 6
+  effects:
+  - !type:EquipGear
+    gear: RaidKitBandagesGear
+  - !type:SetGoapFlag
+    key: FieldMedic
+
+# Heals the wounds of blows, cuts and bullets.
+- type: eventPurchase
+  id: RaidKitBrutepack
+  cost: 8
+  effects:
+  - !type:EquipGear
+    gear: RaidKitBrutepackGear
+  - !type:SetGoapFlag
+    key: FieldMedic
+
+# Heals the burns.
+- type: eventPurchase
+  id: RaidKitOintment
+  cost: 8
+  effects:
+  - !type:EquipGear
+    gear: RaidKitOintmentGear
+  - !type:SetGoapFlag
+    key: FieldMedic
+
+# Makes up for the blood that is lost.
+- type: eventPurchase
+  id: RaidKitBloodpack
+  cost: 10
+  effects:
+  - !type:EquipGear
+    gear: RaidKitBloodpackGear
+  - !type:SetGoapFlag
+    key: FieldMedic
+
+# A little of everything.
+- type: eventPurchase
+  id: RaidKitMedkit
+  cost: 20
+  effects:
+  - !type:EquipGear
+    gear: RaidKitMedkitGear
+  - !type:SetGoapFlag
+    key: FieldMedic

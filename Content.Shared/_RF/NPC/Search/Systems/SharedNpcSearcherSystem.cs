@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Content.Shared._RF.MathHelpers.MathCurve.Systems;
 using Content.Shared._RF.NPC.GOAP;
+using Content.Shared._RF.NPC.GOAP.Domains;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Search.Components;
@@ -35,12 +36,13 @@ namespace Content.Shared._RF.NPC.Search.Systems;
 /// </summary>
 public abstract partial class SharedNpcSearcherSystem : EntitySystem, IQuerySearcher
 {
-    [Dependency] protected IPrototypeManager Proto = default!;
-    [Dependency] private INetManager _net = default!;
-    [Dependency] private MathCurvesSystem _mathCurves = default!;
+    [Dependency] protected IPrototypeManager Proto = null!;
+    [Dependency] private GoapDomainSystem _domains = null!;
+    [Dependency] private INetManager _net = null!;
+    [Dependency] private MathCurvesSystem _mathCurves = null!;
 
-    [Dependency] private EntityQuery<SearchTrackedComponent> _trackedQuery = default!;
-    [Dependency] private EntityQuery<NpcSearcherComponent> _searcherQuery = default!;
+    [Dependency] private EntityQuery<SearchTrackedComponent> _trackedQuery;
+    [Dependency] private EntityQuery<NpcSearcherComponent> _searcherQuery;
 
     /// <summary>
     /// Agents currently holding a live result for a given query prototype.
@@ -76,7 +78,7 @@ public abstract partial class SharedNpcSearcherSystem : EntitySystem, IQuerySear
                 || !live.Tracked.Remove(ent))
                 continue;
 
-            live.Remove(ent);
+            Remove(agent, protoId, live, ent);
         }
     }
 
@@ -231,7 +233,7 @@ public abstract partial class SharedNpcSearcherSystem : EntitySystem, IQuerySear
             {
                 // Rejected here - rests at `stage` until this Filter (or an
                 // earlier one) reports a change for it.
-                live.Remove(candidate);
+                Remove(agent, proto.ID, live, candidate);
                 Track(candidate, agent, proto, stage, null, live);
                 return;
             }
@@ -246,7 +248,45 @@ public abstract partial class SharedNpcSearcherSystem : EntitySystem, IQuerySear
         }
 
         Track(candidate, agent, proto, stage, scores, live);
-        live.Upsert(candidate, Product(scores));
+        Upsert(agent, proto.ID, live, candidate, Product(scores));
+    }
+
+    private void Upsert(
+        EntityUid agent,
+        ProtoId<SearchQueryPrototype> protoId,
+        NpcSearcherComponent.LiveSearchResult live,
+        EntityUid candidate,
+        float score)
+    {
+        var change = live.Upsert(candidate, score);
+
+        if (change == 0)
+            return;
+
+        _domains.Invalidate(agent, SearchGoapDomains.Family);
+        Notify(agent, protoId, candidate, change > 0);
+    }
+
+    private void Remove(
+        EntityUid agent,
+        ProtoId<SearchQueryPrototype> protoId,
+        NpcSearcherComponent.LiveSearchResult live,
+        EntityUid candidate)
+    {
+        if (!live.Remove(candidate))
+            return;
+
+        _domains.Invalidate(agent, SearchGoapDomains.Family);
+        Notify(agent, protoId, candidate, false);
+    }
+
+    private void Notify(EntityUid agent, ProtoId<SearchQueryPrototype> protoId, EntityUid candidate, bool added)
+    {
+        if (!_net.IsServer || !Proto.Resolve(protoId, out var proto) || !proto.Notify)
+            return;
+
+        var ev = new SearchResultChangedEvent(agent, protoId, candidate, added);
+        RaiseLocalEvent(agent, ref ev);
     }
 
     private static float Product(float[] scores)
@@ -272,6 +312,10 @@ public abstract partial class SharedNpcSearcherSystem : EntitySystem, IQuerySear
         float[]? considerationScores,
         NpcSearcherComponent.LiveSearchResult live)
     {
+        // Whoever is being deleted is not tracked, its components are removed one by one and that dirties the filters.
+        if (TerminatingOrDeleted(candidate))
+            return;
+
         var tracked = EnsureComp<SearchTrackedComponent>(candidate);
         tracked.Tracking[(agent, protoId)] = new SearchTrackEntry(filterStage, considerationScores);
         live.Tracked.Add(candidate);
@@ -348,7 +392,7 @@ public abstract partial class SharedNpcSearcherSystem : EntitySystem, IQuerySear
         {
             foreach (var uid in removed)
             {
-                live.Remove(uid);
+                Remove(agent, protoId, live, uid);
                 Untrack(uid, agent, protoId, live);
             }
         }
@@ -390,7 +434,7 @@ public abstract partial class SharedNpcSearcherSystem : EntitySystem, IQuerySear
 
         foreach (var uid in rejected)
         {
-            live.Remove(uid);
+            Remove(agent, protoId, live, uid);
             Track(uid, agent, protoId, stage - 1, null, live);
         }
     }
@@ -434,7 +478,7 @@ public abstract partial class SharedNpcSearcherSystem : EntitySystem, IQuerySear
             entry.ConsiderationScores[considerationIndex] =
                 Score(goap.State, uid, proto.Considerations[considerationIndex]);
 
-            live.Upsert(uid, Product(entry.ConsiderationScores));
+            Upsert(agent, proto.ID, live, uid, Product(entry.ConsiderationScores));
         }
     }
 

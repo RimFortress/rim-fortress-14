@@ -1,0 +1,278 @@
+# A raider fights the enemies that it sees, and goes to the settlement it is sent to when there are none.
+- type: utilityAiGoal
+  id: RaiderAttack
+  color: "#FF0000"
+  scoreCurves:
+  - float: 0.90
+  incumbentBonus:
+  - add: [float: 0.05]
+  conditions:
+  - Query/HostileTarget != null
+  - Retreating == false
+  # The camp does not attack: the raiders fight when the raid goes to the settlement or when they are attacked (the raid goes to it then,
+  # see the Camp phase).
+  - Camping == false
+  capture:
+  - Query/HostileTarget
+  goalState:
+    TargetAttacked: true
+
+# The tactics of a squad depend on its stance (see MeasureGroups and the Raid rule: it is made of how strong the squad is against the
+# residents) and on the role. In the stance 2, rush, the squad is much stronger: it does not keep together, the assault goes for the
+# residents by itself, and only the support stays with the leader. In the stance 1 the squad stays together: all the members stay with
+# the leader. In the stance 0, hold, the squad is too weak: it does not advance, the leader holds, and so do the members, until the
+# squad is stronger or the raid loses heart. All of them fight what they see.
+- type: utilityAiGoal
+  id: RaiderFollow
+  color: "#FFCC44"
+  scoreCurves:
+  - float: 0.65
+  conditions:
+  - Engagement/RaidSquad/Role/SquadLeader != null
+  - Engagement/RaidSquad/Role/SquadLeader/In == false
+  - Engagement/RaidSquad/Role/SquadBreacher/In == false
+  - Engagement/RaidSquad/Var/stance > 0.5
+  - Engagement/RaidSquad/Var/stance < 1.5
+  - Retreating == false
+  - Executing == false
+  goalState:
+    RaiderFollowed: true
+
+# The breacher goes ahead and breaks through, so it is not left alone: the others of the squad (the leader too) stay with it and fight
+# what they see, until the squad rushes and each goes for its own.
+- type: utilityAiGoal
+  id: RaiderEscort
+  color: "#FFCC44"
+  scoreCurves:
+  - float: 0.66
+  conditions:
+  - Engagement/RaidSquad/Role/SquadBreacher != null
+  - Engagement/RaidSquad/Role/SquadBreacher/In == false
+  - Engagement/RaidSquad/Var/stance > 0.5
+  - Engagement/RaidSquad/Var/stance < 1.5
+  - Retreating == false
+  - Executing == false
+  goalState:
+    RaiderEscorted: true
+
+- type: utilityAiGoal
+  id: RaiderFollowSupport
+  color: "#FFCC44"
+  scoreCurves:
+  - float: 0.65
+  conditions:
+  - Engagement/RaidSquad/Role/SquadSupport/In == true
+  - Engagement/RaidSquad/Role/SquadLeader != null
+  - Engagement/RaidSquad/Var/stance > 1.5
+  - Retreating == false
+  - Executing == false
+  goalState:
+    RaiderFollowed: true
+
+- type: utilityAiGoal
+  id: RaiderHold
+  color: "#BBBB44"
+  scoreCurves:
+  - float: 0.7
+  conditions:
+  - Engagement/RaidSquad/Var/stance < 0.5
+  - Retreating == false
+  - Executing == false
+  goalState:
+    RaiderHeld: true
+
+# The closest of the residents that are alive: whom the raider goes to, until it sees an enemy.
+- type: utilityAiGoal
+  id: RaiderApproach
+  color: "#FFAA00"
+  scoreCurves:
+  - float: 0.60
+  conditions:
+  - Query/RaidObjective != null
+  - Retreating == false
+  capture:
+  - Query/RaidObjective
+  goalState:
+    RaiderApproached: true
+
+# Where the settlement is, when there is nobody to go to.
+- type: utilityAiGoal
+  id: RaiderAdvance
+  color: "#FF8800"
+  scoreCurves:
+  - float: 0.50
+  conditions:
+  - Query/RaidObjective == null
+  - !type:KeyExist
+    key: Engagement/RaidForce/Owner/SettlementTarget
+  - Retreating == false
+  goalState:
+    RaiderAdvanced: true
+
+# The raiders that have lost heart run away and do not fight.
+- type: utilityAiGoal
+  id: RaiderRetreat
+  color: "#888888"
+  scoreCurves:
+  - float: 0.95
+  conditions:
+  - Retreating == true
+  goalState:
+    RaiderRetreated: true
+
+# The field medic, see SquadMedic. What it does is more important than the fight: it takes the casualties out of the fire first, and it
+# treats the wounded as soon as nobody shoots at it (the enemy that sees it is the one that threatens), otherwise it is a raider like
+# the others. The casualty that is taken out is not taken any more when nobody threatens it, and then it is treated.
+- type: utilityAiGoal
+  id: MedicRescue
+  color: "#16C934"
+  scoreCurves:
+  - float: 0.93
+  incumbentBonus:
+  - add: [float: 0.05]
+  conditions:
+  - Engagement/RaidSquad/Role/SquadMedic/In == true
+  - Retreating == false
+  - Query/RescueTarget != null
+  # The casualty is in the fire as long as it is as near to the enemy as the residents are felt by the path (the Resident tag).
+  - !type:Threatened
+    targetKey: Query/RescueTarget
+    range: 12
+  capture:
+  - Query/RescueTarget
+  failPolicy: Cooldown
+  goalState:
+    CasualtyRescued: true
+
+- type: utilityAiGoal
+  id: MedicBase
+  abstract: true
+  color: "#16C934"
+  scoreCurves:
+  - float: 0.92
+  incumbentBonus:
+  - add: [float: 0.05]
+  fallbacks:
+  - InterruptHealing
+  failPolicy: Cooldown
+  failCooldown: 30
+
+- type: utilityAiGoal
+  id: MedicStopBleeding
+  parent: MedicBase
+  conditions:
+  - Engagement/RaidSquad/Role/SquadMedic/In == true
+  - Retreating == false
+  - Query/BleedingFriend != null
+  - Query/BleedHealing != null
+  - !type:Threatened
+    invert: true
+  capture:
+  - Query/BleedHealing
+  - Query/BleedingFriend
+  goalState:
+    BleedingStopped: true
+
+- type: utilityAiGoal
+  id: MedicRestoreBlood
+  parent: MedicBase
+  conditions:
+  - Engagement/RaidSquad/Role/SquadMedic/In == true
+  - Retreating == false
+  - Query/LowBloodLevelFriend != null
+  - Query/BloodLevelHealing != null
+  - !type:Threatened
+    invert: true
+  capture:
+  - Query/BloodLevelHealing
+  - Query/LowBloodLevelFriend
+  goalState:
+    BloodLevelRestored: true
+
+- type: utilityAiGoal
+  id: MedicHealDamage
+  parent: MedicBase
+  conditions:
+  - Engagement/RaidSquad/Role/SquadMedic/In == true
+  - Retreating == false
+  - Query/DamageHealTarget != null
+  - !type:Threatened
+    invert: true
+  goalState:
+    DamageHealed: true
+
+# The squad of a medic is the one to stay with: in the rush, when only the support stays with the leader, the medic does as well.
+- type: utilityAiGoal
+  id: RaiderFollowMedic
+  color: "#FFCC44"
+  scoreCurves:
+  - float: 0.65
+  conditions:
+  - Engagement/RaidSquad/Role/SquadMedic/In == true
+  - Engagement/RaidSquad/Role/SquadLeader != null
+  - Engagement/RaidSquad/Var/stance > 1.5
+  - Retreating == false
+  goalState:
+    RaiderFollowed: true
+
+# Whoever is treated waits for it, unless the enemy is near: the one that does not stop is a raider again. The treatment is
+# stopped when an enemy shows up, and the medic does what a raider does.
+- type: utilityAiGoal
+  id: RaiderPatientWaiting
+  color: "#16C934"
+  scoreCurves:
+  - float: 1
+  conditions:
+  - Engagement/Healing/Role/HealedFriened/In == true
+  - !type:Threatened
+    invert: true
+  goalState:
+    PatientWaiting: true
+
+- type: utilityAiGoal
+  id: RaiderStopHealing
+  color: "#16C934"
+  scoreCurves:
+  - float: 0.97
+  conditions:
+  - Engagement/Healing/In == true
+  - !type:Threatened
+  goalState:
+    HealingEngagementInterrupted: true
+
+# The raid camps where it has come, close together, and the raiders only walk about a little, until the raid goes to the settlement
+# or somebody attacks it (it is not above the fight: the raiders that see an enemy fight it).
+- type: utilityAiGoal
+  id: RaiderCamp
+  color: "#88AA44"
+  scoreCurves:
+  - float: 0.80
+  # A failed attempt (no place to walk to, say) does not send the raider off to the settlement: it tries again.
+  failPenalty: 0
+  conditions:
+  - Camping == true
+  - Retreating == false
+  - !type:KeyExist
+    key: Engagement/RaidForce/Owner/CampTarget
+  goalState:
+    RaiderCamped: true
+
+# The raid is sure of the victory (see the Finish phase), so a raider goes by itself to the nearest of the residents who are not dead
+# yet and finishes them off, a resident that is down too. The target is taken by one raider only. Whoever can fight is fought first.
+- type: utilityAiGoal
+  id: RaiderExecute
+  color: "#AA0000"
+  scoreCurves:
+  - float: 0.85
+  incumbentBonus:
+  - add: [float: 0.05]
+  conditions:
+  - Executing == true
+  - Retreating == false
+  - Query/RaidFinishTarget != null
+  capture:
+  - Query/RaidFinishTarget
+  failPolicy: Cooldown
+  failCooldown: 10
+  goalState:
+    TargetExecuted: true

@@ -1,3 +1,4 @@
+using Content.Shared._RF.NPC.Pathfinding.Prototypes; // RimFortress
 using Content.Shared.Atmos;
 using Content.Shared.Movement.Systems;
 using Content.Shared.Shuttles.Systems;
@@ -140,10 +141,10 @@ public sealed partial class ContentTileDefinition : IPrototype, IInheritingProto
     public Color NavMapColor = Color.Gray;
 
     /// <summary>
-    /// Modifier for the base cost of searching for a path through a given tile
+    /// Tags assigned to this tile during pathfinding.
     /// </summary>
     [DataField]
-    public float PathfindingCost;
+    public HashSet<ProtoId<PathTagPrototype>> PathTags = new();
     // RimFortress End
 
     public void AssignTileId(ushort id)

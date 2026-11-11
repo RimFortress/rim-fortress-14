@@ -4,16 +4,50 @@
   color: "#FF0000"
   conditions:
   - CombatMode == true
-  - !type:Or
-    conditions:
-    - AttackTarget == null
-    - !type:MobState
-      targetKey: AttackTarget
-      targetState: Dead
-      invert: true
+  - Query/AttackTarget != null
+  - !type:MobState
+    targetKey: Query/AttackTarget
+    targetState: Dead
+    invert: true
   scoreCurves:
   - float: 0.90
   capture:
   - Query/AttackTarget
   goalState:
     TargetAttacked: true
+
+# A resident runs from whoever is out to hurt it: the entities that are hostile to it and the ones that have hit it just now (see the
+# Threats query). The one that is ordered to fight (the combat mode) does not, and neither does the one that has been told what to do,
+# the orders are more important (BaseExecutableGoal).
+- type: utilityAiGoal
+  id: Flee
+  parent: BaseUtilityAiGoal
+  color: "#FFDD00"
+  conditions:
+  - CombatMode == false
+  - Query/Threats != null
+  # Whoever has hit it and is within reach is fought, see DefendSelf, and the resident does not start to run for the moment before it gets to it.
+  - Query/Aggressor == null
+  scoreCurves:
+  - float: 0.95
+  # Nowhere to run to is no reason to try again at once.
+  failPolicy: Cooldown
+  failCooldown: 3
+  goalState:
+    Fled: true
+
+# A resident that has been hit by somebody within reach fights back, and does not run: it is caught, and the one who is as fast as it is hits
+# it in the back at every stop. It is over the Flee goal (0.95). The combat mode is on only while the fight lasts, so there are no conditions
+# of the base goal here.
+- type: utilityAiGoal
+  id: DefendSelf
+  color: "#FF6600"
+  conditions:
+  - CombatMode == false
+  - Query/Aggressor != null
+  scoreCurves:
+  - float: 0.96
+  incumbentBonus:
+  - add: [float: 0.05]
+  goalState:
+    Defended: true

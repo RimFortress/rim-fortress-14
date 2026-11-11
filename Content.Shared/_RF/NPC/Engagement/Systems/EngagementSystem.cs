@@ -33,6 +33,15 @@ public sealed partial class EngagementSystem : EntitySystem
     [Dependency] private EntityQuery<EngagementParticipantComponent> _participantQuery = default!;
     [Dependency] private EntityQuery<GoapComponent> _goapQuery = default!;
 
+    /// <summary>
+    /// Tells (<see cref="EngagementChanged"/>) that who is in the situation has changed.
+    /// </summary>
+    private void Changed(EntityUid engagement, EntityUid? extra1 = null, EntityUid? extra2 = null)
+    {
+        var changed = new EngagementChanged(engagement, extra1, extra2);
+        RaiseLocalEvent(ref changed);
+    }
+
     [SubscribeLocalEvent]
     private void OnParticipantRemove(Entity<EngagementParticipantComponent> ent, ref ComponentRemove args)
     {
@@ -43,16 +52,17 @@ public sealed partial class EngagementSystem : EntitySystem
         }
     }
 
+    // A change of the state of the mob is likely to be what an agent needs to stay in a role for, so the conditions are
+    // checked at once and not at the next update. Which states are fine is up to the role.
     [SubscribeLocalEvent]
     private void OnMobStateChanged(Entity<EngagementParticipantComponent> ent, ref MobStateChangedEvent args)
     {
-        if (args.NewMobState == MobState.Alive)
-            return;
-
-        foreach (var (engagementUid, _) in ent.Comp.Membership.ToArray())
+        foreach (var (engagementUid, roleId) in ent.Comp.Membership.ToArray())
         {
-            if (_engagementQuery.TryComp(engagementUid, out var comp))
-                LeaveEngagement((engagementUid, comp), ent.Owner, EngagementEndReason.Interrupted);
+            if (_engagementQuery.TryComp(engagementUid, out var comp)
+                && _prototype.Resolve(roleId, out var role)
+                && !MeetsStayRequirements(role, ent.Owner))
+                LeaveEngagement((engagementUid, comp), ent.Owner, EngagementEndReason.Dissolved);
         }
     }
 
@@ -85,10 +95,7 @@ public sealed partial class EngagementSystem : EntitySystem
         EntityUid actor,
         EntityUid inviter)
     {
-        if (!_prototype.Resolve(engagement.Comp.Kind, out var proto))
-            return;
-
-        var validUntil = _timing.CurTime + proto.InviteTime;
+        var validUntil = _timing.CurTime + engagement.Comp.InviteTime;
         engagement.Comp.Invites.Add((role, actor, validUntil));
 
         var participant = EnsureComp<EngagementParticipantComponent>(actor);
@@ -98,6 +105,7 @@ public sealed partial class EngagementSystem : EntitySystem
         RaiseLocalEvent(actor, ev);
         RaiseLocalEvent(engagement, ev);
         RaiseLocalEvent(inviter, ev);
+        Changed(engagement, actor, inviter);
     }
 
     /// <summary>
@@ -107,7 +115,7 @@ public sealed partial class EngagementSystem : EntitySystem
     /// directions, via DFS backtracking over the whole candidate pool at once.
     /// </summary>
     private bool TryAssignRoles(
-        EngagementPrototype proto,
+        EngagementComponent proto,
         EntityUid initiator,
         IEnumerable<EntityUid> candidates,
         [NotNullWhen(true)] out Dictionary<ProtoId<EngagementRolePrototype>, List<EntityUid>>? assignment)
@@ -210,6 +218,9 @@ public sealed partial class EngagementSystem : EntitySystem
         if (role.InitiatorOnly && actor != engagement.Comp.Initiator)
             return false;
 
+        if (!MeetsStayRequirements(role, actor))
+            return false;
+
         var current = engagement.Comp.Actors.TryGetValue(role, out var set) ? set.Count : 0;
 
         if (current >= role.MaxCount)
@@ -229,9 +240,7 @@ public sealed partial class EngagementSystem : EntitySystem
         EngagementEndReason reason,
         bool cleanupParticipant)
     {
-        if (!_prototype.Resolve(roleId, out var role)
-            || !_prototype.Resolve(engagement.Comp.Kind, out var proto)
-            || !proto.Roles.Contains(role))
+        if (!_prototype.Resolve(roleId, out var role) || !engagement.Comp.Roles.Contains(roleId))
             return;
 
         if (!engagement.Comp.Actors.TryGetValue(roleId, out var set) || !set.Remove(actor))
@@ -246,7 +255,8 @@ public sealed partial class EngagementSystem : EntitySystem
         {
             participant.Membership.Remove(engagement.Owner);
 
-            if (participant.Membership.Count == 0)
+            // The invites are in the component as well: it is not removed from under those who are invited to something else.
+            if (participant.Membership.Count == 0 && participant.Invites.Count == 0)
                 RemComp<EngagementParticipantComponent>(actor);
         }
 
@@ -263,14 +273,26 @@ public sealed partial class EngagementSystem : EntitySystem
         var ev = new EngagementRoleLeft(engagement.Owner, actor, role, reason);
         RaiseLocalEvent(actor, ev);
         RaiseLocalEvent(engagement.Owner, ev);
+        Changed(engagement.Owner, actor);
 
-        if (!engagement.Comp.Started || !proto.DissolveInvalid)
+        if (!engagement.Comp.Started || !engagement.Comp.DissolveInvalid)
             return;
 
         var remaining = engagement.Comp.Actors.TryGetValue(role, out var left) ? left.Count : 0;
 
         if (remaining < role.MinCount)
             EndEngagement(engagement.AsNullable(), EngagementEndReason.Dissolved);
+    }
+
+    /// <summary>
+    /// Checks <see cref="EngagementRolePrototype.StayConditions"/> of the role for the actor.
+    /// </summary>
+    private bool MeetsStayRequirements(EngagementRolePrototype role, EntityUid actor)
+    {
+        if (role.StayConditions.Count == 0)
+            return true;
+
+        return _goapQuery.TryComp(actor, out var goap) && _goap.CheckCondition(actor, goap.State, role.StayConditions);
     }
 
     /// <summary>
@@ -391,6 +413,7 @@ public sealed partial class EngagementSystem : EntitySystem
         var ev = new EngagementRoleJoined(engagement.Owner, actor, role);
         RaiseLocalEvent(actor, ev);
         RaiseLocalEvent(engagement.Owner, ev);
+        Changed(engagement.Owner, actor);
 
         CheckStarted(engagement);
     }
@@ -402,10 +425,10 @@ public sealed partial class EngagementSystem : EntitySystem
     /// </summary>
     private void CheckStarted(Entity<EngagementComponent> engagement)
     {
-        if (engagement.Comp.Started || !_prototype.TryIndex(engagement.Comp.Kind, out var proto))
+        if (engagement.Comp.Started)
             return;
 
-        foreach (var roleId in proto.Roles)
+        foreach (var roleId in engagement.Comp.Roles)
         {
             if (!_prototype.Resolve(roleId, out var role))
                 continue;
@@ -417,8 +440,9 @@ public sealed partial class EngagementSystem : EntitySystem
         }
 
         engagement.Comp.Started = true;
-        var ev = new EngagementStarted(engagement.Owner, engagement.Comp.Kind);
+        var ev = new EngagementStarted(engagement.Owner);
         RaiseLocalEvent(engagement.Owner, ev);
+        Changed(engagement.Owner);
 
         foreach (var (roleId, actors) in engagement.Comp.Actors)
         {
@@ -467,7 +491,7 @@ public sealed partial class EngagementSystem : EntitySystem
             foreach (var (roleId, actors) in comp.Actors.ToArray())
             {
                 if (!_prototype.Resolve(roleId, out var role)
-                    || !role.AlwaysConditionCheck)
+                    || !role.AlwaysConditionCheck && role.StayConditions.Count == 0)
                     continue;
 
                 foreach (var actor in actors.ToArray())
@@ -477,8 +501,10 @@ public sealed partial class EngagementSystem : EntitySystem
 
                     comp.NextConditionCheck[actor] = _timing.CurTime + role.ConditionsCheckRate;
 
-                    if (!MeetsForwardRequirements((uid, comp), role, actor)
-                        || !MeetsReverseRequirements(new(uid, comp), role, actor))
+                    if (!MeetsStayRequirements(role, actor)
+                        || role.AlwaysConditionCheck
+                        && (!MeetsForwardRequirements((uid, comp), role, actor)
+                            || !MeetsReverseRequirements(new(uid, comp), role, actor)))
                         LeaveEngagement((uid, comp), actor, EngagementEndReason.Dissolved);
                 }
             }

@@ -30,10 +30,10 @@
     - Pulled == false
     - WeaponTarget != null
     actions:
-    - !type:EntityCoords
-      targetKey: WeaponTarget
     - !type:MoveTo
+      targetEntityKey: WeaponTarget
       rangeKey: InteractRange
+      sprint: true
     - !type:Pickup
       targetKey: WeaponTarget
     - !type:Wield
@@ -45,17 +45,15 @@
   - preconditions:
     - GunFound == true
     - WeaponPickedUp == true
-    - Query/AttackTarget != null
+    - Query/AttackTarget || Query/HostileTarget != null
     actions:
-    - !type:EntityCoords
-      targetKey: Query/AttackTarget
     - !type:MoveTo
+      targetEntityKey: Query/AttackTarget || Query/HostileTarget
       rangeKey: MeleeRange
       stopOnLineOfSight: true
-    - !type:Juke
-      jukeType: Away
+      sprint: true
     - !type:Gun
-      targetKey: Query/AttackTarget
+      targetKey: Query/AttackTarget || Query/HostileTarget
       removeCombatMode: false
     effects:
       TargetAttacked: true
@@ -64,35 +62,35 @@
   - preconditions:
     - MeleeFound == true
     - WeaponPickedUp == true
-    - Query/AttackTarget != null
+    - Query/AttackTarget || Query/HostileTarget != null
     actions:
     - !type:Wield
       targetState: true
-    - !type:EntityCoords
-      targetKey: Query/AttackTarget
     - !type:MoveTo
+      targetEntityKey: Query/AttackTarget || Query/HostileTarget
       rangeKey: MeleeRange
-    - !type:Juke
+      sprint: true
     - !type:Melee
-      targetKey: Query/AttackTarget
+      targetKey: Query/AttackTarget || Query/HostileTarget
       removeCombatMode: false
       costMultiplier: 4
+      footwork: {}
     effects:
       TargetAttacked: true
 
   # Fistfight
   - preconditions:
     - WeaponTarget == null
-    - Query/AttackTarget != null
+    - Query/AttackTarget || Query/HostileTarget != null
     actions:
-    - !type:EntityCoords
-      targetKey: Query/AttackTarget
     - !type:MoveTo
+      targetEntityKey: Query/AttackTarget || Query/HostileTarget
       rangeKey: MeleeRange
-    - !type:Juke
+      sprint: true
     - !type:Melee
-      targetKey: Query/AttackTarget
+      targetKey: Query/AttackTarget || Query/HostileTarget
       removeCombatMode: false
       costMultiplier: 100 # A fistfight is the least desirable option
+      footwork: {}
     effects:
       TargetAttacked: true

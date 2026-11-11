@@ -1,0 +1,5 @@
+- type: !PartialOnly entity
+  id: GlassBoxFrame
+  components:
+  - type: PathTags
+    tags: [Climbable]

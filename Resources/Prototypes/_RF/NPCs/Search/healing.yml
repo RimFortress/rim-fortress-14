@@ -404,3 +404,24 @@
     - Slash
     curves:
     - preset: HealingTargetDamage
+
+# Raiders: the field medic
+
+# Whom the medic takes out: those of the own that are down and can be pulled, the closest first.
+- type: searchQuery
+  id: RescueTarget
+  query: !type:Owned
+  filters:
+  - !type:Component
+    components:
+    - type: Pullable
+  - !type:Pulled
+    invert: true
+  - !type:Captured
+    invert: true
+  - !type:IsFriendly
+  - !type:IsCritical
+  considerations:
+  - !type:TargetDistance
+    curves:
+    - preset: TargetDistance

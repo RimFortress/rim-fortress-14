@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Numerics;
+using Content.Shared._RF.MathHelpers;
 using Content.Shared.Parallax.Biomes;
 using Content.Shared.Physics;
 using Robust.Shared.Map;
@@ -17,15 +18,20 @@ public partial class SharedRimFortressWorldSystem
     /// </summary>
     /// <param name="targetCoords">Spawning coordinates</param>
     /// <param name="popPrototypes">Entity prototypes for spawning</param>
-    /// <param name="radius">The minimum distance that should be from the spawn point to any player settlement</param>
+    /// <param name="radius">How far from the target the spawn point is chosen (by chance between the two numbers), the minimum is also how close
+    /// to any player settlement it can be</param>
     /// <returns>List of spawned entities</returns>
     public List<EntityUid> SpawnPop(
         EntityCoordinates targetCoords,
         List<EntProtoId> popPrototypes,
-        int? radius = null)
+        MinMaxFloat? radius = null)
     {
         var spawned = new List<EntityUid>();
-        var freeTiles = GetSpawnTiles(targetCoords, popPrototypes.Count, radius ?? _playerSafeRadius).ToList();
+        var freeTiles = GetSpawnTiles(targetCoords, popPrototypes.Count, radius ?? SafeRadius).ToList();
+
+        // There is nowhere to spawn them.
+        if (freeTiles.Count == 0)
+            return spawned;
 
         // Spawn the entities on a random free tile
         while (popPrototypes.Count > 0)
@@ -46,19 +52,20 @@ public partial class SharedRimFortressWorldSystem
     /// <param name="popProto">Prototype of the entity to be spawned</param>
     /// <param name="amount">Amount of entities to be spawned</param>
     /// <param name="entities">Entities spawned elsewhere previously that will be used in place of the prototype spawning</param>
-    /// <param name="radius">The minimum distance that should be from the spawn point to any player settlement</param>
+    /// <param name="radius">How far from the target the spawn point is chosen (by chance between the two numbers), the minimum is also how close
+    /// to any player settlement it can be</param>
     /// <returns>List of spawned entities</returns>
     public List<EntityUid> SpawnPop(
         EntityCoordinates targetCoords,
         EntProtoId? popProto = null,
         int amount = 1,
         List<EntityUid>? entities = null,
-        int? radius = null)
+        MinMaxFloat? radius = null)
     {
         DebugTools.Assert(popProto != null || entities?.Count == amount);
 
         var spawned = new List<EntityUid>();
-        var freeTiles = GetSpawnTiles(targetCoords, amount, radius ?? _playerSafeRadius);
+        var freeTiles = GetSpawnTiles(targetCoords, amount, radius ?? SafeRadius);
 
         if (freeTiles.Count == 0)
             return spawned;
@@ -91,9 +98,9 @@ public partial class SharedRimFortressWorldSystem
         if (Rule is not { } rule)
             return new();
 
-        var settlements = AllSettlements();
+        var settlements = Settlements.AllSettlements();
         var coords = settlements.Count > 0
-            ? _random.Pick(settlements)
+            ? Settlements.GetCoordinates(_random.Pick(settlements))
             : new EntityCoordinates(rule.WorldMap, Vector2.Zero);
 
         return GetSpawnTiles(coords, amount);
@@ -121,12 +128,12 @@ public partial class SharedRimFortressWorldSystem
 
         return GetSpawnTiles(rule.WorldMap,
             targetCoordinates,
-            _playerSafeRadius,
+            SafeRadius,
             SpawnAreaRadius,
             MinSpawnAreaTiles);
     }
 
-    public HashSet<TileRef> GetSpawnTiles(EntityCoordinates targetCoordinates, int amount, int radius)
+    public HashSet<TileRef> GetSpawnTiles(EntityCoordinates targetCoordinates, int amount, MinMaxFloat radius)
     {
         if (Rule is not { } rule)
             return new();
@@ -153,33 +160,42 @@ public partial class SharedRimFortressWorldSystem
     /// </summary>
     /// <param name="grid">Grid entity</param>
     /// <param name="targetCoords">Spawning center coordinates</param>
-    /// <param name="radiusFromPlayers">The minimum radius beyond which the tile must be from any player</param>
+    /// <param name="radiusFromPlayers">How far from the target the tile is looked for, the minimum is also the radius beyond which the tile
+    /// must be from any player settlement</param>
     /// <param name="spawnAreaRadius">The radius from the target point at which spawning tiles can be searched for</param>
     /// <param name="minSpawnAreaTiles">The minimum number of free tiles to which a spawning tile must be connected.</param>
     public HashSet<TileRef> GetSpawnTiles(
         Entity<MapGridComponent?> grid,
         EntityCoordinates targetCoords,
-        int radiusFromPlayers,
+        MinMaxFloat radiusFromPlayers,
         int spawnAreaRadius,
         int minSpawnAreaTiles)
     {
         if (!Resolve(grid, ref grid.Comp))
             return new();
 
-        var angle = Angle.FromDegrees(_random.NextFloat(360f));
-        var distance = radiusFromPlayers;
-        var settlements = AllSettlements();
+        var settlements = Settlements
+            .AllSettlements()
+            .Select(x => Settlements.GetCoordinates(x))
+            .ToList();
+
+        // Every try is in a new direction and at a new distance in the range; the range moves outward if nothing is found for a while.
+        var extra = 0f;
+        var tries = 0;
 
         while (true)
         {
+            var angle = Angle.FromDegrees(_random.NextFloat(360f));
+            var distance = radiusFromPlayers.Next(_random) + extra;
             var pos = new Vector2((float) Math.Cos(angle), (float) Math.Sin(angle)) * distance + targetCoords.Position;
             var valid = true;
 
-            distance += radiusFromPlayers / 2;
+            if (++tries % 10 == 0)
+                extra += Math.Max(radiusFromPlayers.Max, 2f) / 2;
 
             foreach (var settlement in settlements)
             {
-                if (Vector2.Distance(pos, settlement.Position) >= radiusFromPlayers)
+                if (Vector2.Distance(pos, settlement.Position) >= radiusFromPlayers.Min)
                     continue;
 
                 valid = false;

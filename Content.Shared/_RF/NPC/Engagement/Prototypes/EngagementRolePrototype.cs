@@ -56,10 +56,32 @@ public sealed partial class EngagementRolePrototype : IPrototype, IInheritingPro
     public bool AlwaysConditionCheck;
 
     /// <summary>
+    /// How big a share of the participants that are put into a situation without a role in mind this role is for, see
+    /// <c>EngagementSystem.TryJoinAnyRole</c>: the roles are filled in proportion to their weights, so a role of weight 3 has
+    /// three times as many as a role of weight 1. A role of weight 0 is never taken that way, except to fill it up to its
+    /// <see cref="MinCount"/>.
+    /// </summary>
+    [DataField]
+    public float Weight = 1f;
+
+    /// <summary>
     /// The requirements an agent must satisfy to take on this role.
     /// </summary>
     [DataField(serverOnly: true)]
     public List<GoapCondition> Conditions = new();
+
+    /// <summary>
+    /// What has to hold for an agent to stay in this role, such as being alive. They are checked as long as the agent has the
+    /// role, every <see cref="ConditionsCheckRate"/> and at once when its mob state changes, and the agent leaves the role
+    /// when they stop holding. An agent that cannot satisfy them cannot take the role.
+    /// </summary>
+    /// <remarks>
+    /// Unlike <see cref="Conditions"/> these are not requirements to take the role that are checked again from time to time
+    /// (<see cref="AlwaysConditionCheck"/>), so a role can ask for much less of the one who plays it than of the one who
+    /// takes it.
+    /// </remarks>
+    [DataField(serverOnly: true)]
+    public List<GoapCondition> StayConditions = new();
 
     /// <summary>
     /// Conditions regarding other participants in the situation

@@ -99,6 +99,50 @@ public abstract partial class SharedExecutableGoalSystem : EntitySystem
         }
     }
 
+    // On the client: what the server tells about the path of an agent. Only those who control the agent are told.
+    [SubscribeNetworkEvent]
+    private void OnRouteMessage(NpcRouteMessage msg)
+    {
+        if (_net.IsServer || !TryGetEntity(msg.Agent, out var uid) || !ControllableQuery.TryComp(uid, out var comp))
+            return;
+
+        comp.RouteGraph = TryGetEntity(msg.Graph, out var graph) ? graph.Value : EntityUid.Invalid;
+        comp.Route.Clear();
+        comp.Route.AddRange(msg.Points);
+    }
+
+    // On the server: the path is asked for by the one who controls the agent and has not got it, such as when the agent has come into view.
+    [SubscribeNetworkEvent]
+    private void OnRouteRequest(NpcRouteRequest request, EntitySessionEventArgs args)
+    {
+        var uid = GetEntity(request.Agent);
+
+        if (!_net.IsServer
+            || !CanControl(args.SenderSession, uid)
+            || !ControllableQuery.TryComp(uid, out var comp)
+            || comp.Route.Count == 0)
+            return;
+
+        SendRoute(uid, comp, args.SenderSession);
+    }
+
+    // The target of the order is not lost when the goal is put aside for another one, such as the opening of a door.
+    [SubscribeLocalEvent]
+    private void OnUtilityAiSuspendedKeys(Entity<ControllableNpcComponent> ent, ref UtilityAiSuspendedKeys args)
+    {
+        if (!Executables.TryGetValue(args.Goal, out var execs))
+            return;
+
+        foreach (var exec in execs)
+        {
+            if (!Proto.Resolve(exec, out var proto))
+                continue;
+
+            args.Keys.Add(proto.TargetKey);
+            args.Keys.Add(proto.TargetCoordinatesKey);
+        }
+    }
+
     [SubscribeLocalEvent]
     private void OnUtilityAiGoalFinished(Entity<ControllableNpcComponent> ent, ref BeforeUtilityAiGoalFinished args)
     {

@@ -17,8 +17,11 @@ public sealed partial class RimFortressPlayerComponent : Component
     [ViewVariables(VVAccess.ReadOnly)]
     public bool GotRoundstartPops;
 
+    /// <summary>
+    /// The player has lost all of the pops that were alive and has been thrown out into the ghosts, see the defeat system.
+    /// </summary>
     [ViewVariables]
-    public TimeSpan LastEventTime;
+    public bool Defeated;
 
     [ViewVariables, AutoNetworkedField]
     public Color FactionColor = Color.Blue;

@@ -30,6 +30,9 @@
       onDamage:
       - type: ChangeOpinionOnTrigger
         effect: OpinionAttacked
+        # The one who hit is a threat for a while, see the Flee goal.
+        effects:
+        - OpinionRecentlyAttacked
         keysIn:
         - onDamage
   - type: ChangeMoodOnAte

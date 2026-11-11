@@ -1,0 +1,71 @@
+# Queries are what a path is asked for, the profiles of the agents say what costs what. A rule of a profile can be for
+# one query only, see the Query condition, it can be inverted, and a new kind of request is a new query, not a change of the profiles.
+
+# A way to a place. A path that would have to go through what the profile does not let through is not a path, and
+# the agent gives up at once instead of walking up to it. The search is stopped at maxNodes nodes: a path to a target in the middle of what the profiles charge a lot for (the residents'
+# fire, the bodies round a wall that is to be broken through) goes a long way round in the nodes before it gets there, and with the
+# default (4000) such a path was "not found" for the raiders at a wall, so they stood at it for minutes, until the search happened to
+# succeed.
+- type: pathQuery
+  id: Travel
+  algorithm: !type:AStar
+    maxNodes: 10000
+    maxCost: 5000
+    allowPartial: false
+
+# A place to go to when there is nowhere to go (see PickAccessible), not far from the agent.
+- type: pathQuery
+  id: Wander
+  algorithm: !type:Bfs
+    range: 7
+    minRange: 2
+    maxCost: 5000
+
+# A place to leave to: the cheapest way to a chunk of the world that is not loaded, where nobody observes. The profiles say
+# what costs what, a way out goes round the settlements, see the Settlement tag.
+- type: pathQuery
+  id: Retreat
+  algorithm: !type:Bfs
+    range: 150
+    maxNodes: 6000
+    maxChunks: 0
+    pick: Unobserved
+
+# A way to somewhere that may be out of reach, such as the resident of a settlement behind its walls: as close as it goes, and
+# the agent is not stopped by what it cannot go through.
+- type: pathQuery
+  id: Approach
+  algorithm: !type:AStar
+    maxNodes: 10000
+    maxCost: 5000
+    allowPartial: true
+
+# A place to take cover at, near the agent: the one that the profiles charge the least for standing at, such as the one that the
+# enemies do not see, and of those that are equal the closest, see the rules of the profiles.
+- type: pathQuery
+  id: Shelter
+  algorithm: !type:Bfs
+    range: 25
+    minRange: 4
+    maxNodes: 2500
+    maxCost: 5000
+    pick: Safest
+
+# A place to run to: far from what the agent keeps away from (see the avoid of the actions: the threats),
+# and the closest of those that are as good. It is not near the agent, one has to run to be safe.
+- type: pathQuery
+  id: Flee
+  algorithm: !type:Bfs
+    range: 35
+    minRange: 10
+    maxNodes: 3000
+    maxCost: 5000
+    pick: Safest
+
+# The way to the place that is run to: it goes round the threats and not past them. As close as it goes.
+- type: pathQuery
+  id: FleeRoute
+  algorithm: !type:AStar
+    maxNodes: 10000
+    maxCost: 5000
+    allowPartial: true

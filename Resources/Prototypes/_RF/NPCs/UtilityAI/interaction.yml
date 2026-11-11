@@ -39,9 +39,66 @@
 - type: utilityAiGoal
   id: TakeOwnership
   color: "#075967"
+  conditions:
+  - CombatMode == false
   scoreCurves:
   - float: 0.8
   goalState:
     TargetOwned: true
   capture:
   - Query/TakeOwnershipTarget
+
+# The goal of the path nodes that are climbed over, it is not chosen by the agent by itself.
+- type: utilityAiGoal
+  id: Climb
+  color: "#00D5FF"
+  tempKeys:
+  - ClimbTarget
+  - ClimbPoint
+  goalState:
+    Climbed: true
+
+# The goals of the doors on the path, they are not chosen by the agent by itself, see the Door rules of the profiles.
+- type: utilityAiGoal
+  id: DoorOpen
+  color: "#00D5FF"
+  tempKeys:
+  - DoorTarget
+  - DoorPoint
+  - DoorOpened
+  goalState:
+    DoorOpened: true
+
+- type: utilityAiGoal
+  id: DoorClose
+  color: "#00D5FF"
+  tempKeys:
+  - DoorTarget
+  - DoorPoint
+  - DoorClosed
+  goalState:
+    DoorClosed: true
+
+- type: utilityAiGoal
+  id: DoorPry
+  color: "#00D5FF"
+  capture:
+  - Query/Crowbar
+  tempKeys:
+  - DoorTarget
+  - DoorPoint
+  - DoorPried
+  - DoorCrowbar
+  goalState:
+    DoorPried: true
+
+
+# The goal of the path nodes that are broken through, it is not chosen by the agent by itself, see the Breacher profile.
+- type: utilityAiGoal
+  id: Breach
+  color: "#FF5500"
+  tempKeys:
+  - BreachTarget
+  - BreachPoint
+  goalState:
+    Breached: true

@@ -1,0 +1,31 @@
+# A settlement of a player, see SettlementTracker. It is where the center of the group of pops is.
+- type: entity
+  id: RimFortressSettlement
+  name: settlement
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Settlement
+  # What the settlement owns is priced once and kept (see the narrator, which only reads it). A thing falls into the first category
+  # that fits it: the pops, then the buildings (what is built, and is not something to carry), then the things.
+  - type: SettlementWealth
+    categories:
+    - id: Pop
+      whitelist:
+        components:
+        - MobState
+    - id: Construction
+      whitelist:
+        components:
+        - Construction
+      blacklist:
+        components:
+        - Item
+    - id: Item
+      whitelist:
+        components:
+        - Item
+  # The events are for a settlement, each has its own wait for them.
+  - type: SettlementEvents
+  - type: PathTags
+    tags:
+    - Settlement

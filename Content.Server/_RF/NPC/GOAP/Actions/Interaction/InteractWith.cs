@@ -30,6 +30,13 @@ public sealed partial class InteractWith : BaseGoapAction<InteractWith>
     public bool ExpectDoAfter;
 
     /// <summary>
+    /// Put the combat mode back as it was after the interaction. The interaction is done with the combat mode off, and
+    /// the combat mode is not the agent's own to give up if it is on an order, such as the one that goes by a door.
+    /// </summary>
+    [DataField]
+    public bool KeepCombatMode;
+
+    /// <summary>
     /// The key where the ID of the current `doAfter` is stored.
     /// </summary>
     public StateKey<ushort> CurrentDoAfter = "CurrentInteractWithDoAfter";
@@ -65,7 +72,7 @@ public sealed partial class InteractWithSystem : GoapActionSystem<InteractWith>
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, InteractWith action)
         => !TryGet(ent, action.TargetKey, out var target)
             ? GoapActionResult.Failed
-            : DoInteraction(ent, action, target, action.CurrentDoAfter, action.ExpectDoAfter);
+            : DoInteraction(ent, action, target, action.CurrentDoAfter, action.ExpectDoAfter, action.KeepCombatMode);
 
     /// <summary>
     /// Involves AI interaction with the target object,
@@ -77,6 +84,7 @@ public sealed partial class InteractWithSystem : GoapActionSystem<InteractWith>
     /// <param name="target">Target entity.</param>
     /// <param name="currentDoAfter">The key where the ID of the current `doAfter` is stored.</param>
     /// <param name="expectDoAfter">Exit with failure if doafter wasn't raised.</param>
+    /// <param name="keepCombatMode">Put the combat mode back as it was after the interaction.</param>
     /// <returns>
     /// <see cref="GoapActionResult.Finished"/> if the interaction completed successfully,
     /// <see cref="GoapActionResult.Continuing"/> if it is in progress,
@@ -88,7 +96,8 @@ public sealed partial class InteractWithSystem : GoapActionSystem<InteractWith>
         GoapAction action,
         EntityUid target,
         StateKey<ushort> currentDoAfter,
-        bool expectDoAfter)
+        bool expectDoAfter,
+        bool keepCombatMode = false)
     {
         if (Deleted(target))
         {
@@ -101,8 +110,13 @@ public sealed partial class InteractWithSystem : GoapActionSystem<InteractWith>
         if (waitResult != GoapActionResult.Finished)
             return waitResult;
 
+        var wasInCombat = false;
+
         if (TryComp<CombatModeComponent>(ent, out var combatMode))
+        {
+            wasInCombat = combatMode.IsInCombatMode;
             _combatMode.SetInCombatMode(ent, false, combatMode);
+        }
 
 #if TOOLS
         var handEnt = TryGet(ent, GoapState.ActiveHandEntity, out var hand)
@@ -111,6 +125,9 @@ public sealed partial class InteractWithSystem : GoapActionSystem<InteractWith>
         CreateDump($"interacted with {ToPrettyString(target)} using {handEnt}");
 #endif
         _interaction.UserInteraction(ent, Transform(target).Coordinates, target);
+
+        if (keepCombatMode && wasInCombat && combatMode != null)
+            _combatMode.SetInCombatMode(ent, true, combatMode);
 
         // Detect doAfter, save it, and don't exit from this operator
         if (_doAfterQuery.TryComp(ent, out var doAfter) && nextId != doAfter.NextId)

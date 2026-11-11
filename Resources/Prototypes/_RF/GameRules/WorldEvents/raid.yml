@@ -1,0 +1,501 @@
+# Raids
+- type: entity
+  id: Raid
+  parent: BaseScriptedWorldRule
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: WorldRule
+    startOffset: 15m
+    cost: 75
+    # A raid is not for a pop that is off on its own.
+    minResidents: 2
+  - type: MigrationRule
+    # The raid comes from far away: the settlement is small, and a raid that comes in sight of it is no raid.
+    radiusFromSettlement:
+      min: 50
+      max: 65
+    # A raider comes with its base gear, and what the points are left after the raiders are bought for, a part of them is kept for
+    # that, makes them stronger: armor, a helmet, a crowbar, a pistol, see the purchases. They are given before the squads are made,
+    # so the raiders are counted with them.
+    spawn:
+      Raider: 35
+    # The purchases are in groups: a group has its own chance (weight) among the groups, the most of it that one raider can have (each
+    # has its own number from none to that), and the chances of the purchases in it. The limit is of a kind of purchases, not of all of them together.
+    purchases:
+    - weight: 3
+      max: 2
+      purchases:
+        RaidKitArmor: 1
+        RaidKitHelmet: 1
+    - purchases:
+        RaidKitCrowbar: 1
+    - purchases:
+        RaidKitPistol: 1
+    # The medicine: a raider has some of it, or none, and the one that has it is the medic of its squad, see SquadMedic.
+    - max: 2
+      purchases:
+        RaidKitBandages: 3
+        RaidKitBrutepack: 3
+        RaidKitOintment: 2
+        RaidKitBloodpack: 2
+        RaidKitMedkit: 1
+    purchaseShare:
+      min: 0.2
+      max: 0.4
+  - type: NotificationRule
+    proto: Raid
+  - type: MathVariables
+    # What is tuned, and the counters that the events change.
+    variables:
+      kills: [float: 0]
+      losses: [float: 0]
+      raidersTotal: [float: 0]
+      # A squad has to be at least squadPowerRatio of the power of the residents (targetPower, see below), so a force that is not
+      # stronger than that is one squad, and the stronger it is the more squads there are, up to maxGroups of the FormGroups, when
+      # the raid has just come. After that the squads are only joined, see MergeGroups.
+      squadPowerRatio: [float: 0.6]
+      # The stance of a squad: it holds if it is weaker than holdRatio of the power of the residents, and rushes if it is stronger
+      # than rushRatio of it, otherwise it keeps together, see the goals of the raiders.
+      holdRatio: [float: 0.5]
+      rushRatio: [float: 1.5]
+      # A squad that is weaker than mergeFraction of that joins another one, if it stays so for long enough and one is near.
+      mergeFraction: [float: 0.5]
+      # The morale of the raiders is how many of them are alive, plus what the kills add to it, minus what the time without
+      # kills takes away. When it falls below retreatMorale the raiders retreat.
+      moraleKillBonus: [float: 0.5]
+      # How much a raider that is down (critical) counts for in the morale, as a share of one that stands: it is not lost as long as it
+      # can be treated (see SquadMedic), but it is worth less. The one that is dead counts for nothing.
+      downMoraleShare: [float: 0.5]
+      # The raid does not come at once: it camps where it has come, for the residents to get ready, for campMin seconds and up to
+      # campSpread more (chosen by chance), and the camp is over earlier if the raiders are hurt (campDamage is how much damage, more than they came with, is enough).
+      campMin: [float: 60]
+      campSpread: [float: 30]
+      campDamage: [float: 3]
+      # What the damage of the raiders was when the camp was set up (they come with scratches), and whether it is known yet.
+      campBase: [float: 0]
+      campSettled: [float: 0]
+      # The raiders only put the residents down (they do not kill) while they are not sure of the victory. When most of the residents
+      # are down (finishDownFraction) and the raiders are finishRatio times stronger than those who still stand, they finish the
+      # down off, each one by itself, and the raid is won when most of the residents are dead (winDeadFraction). If it takes longer than
+      # finishDuration they leave anyway.
+      finishDownFraction: [float: 0.5]
+      finishRatio: [float: 3]
+      winDeadFraction: [float: 0.8]
+      finishDuration: [float: 300]
+      stalemateTime: [float: 600]
+      retreatMorale: [float: 0.3]
+      # For how long they retreat, until those who are left are gone.
+      retreatDuration: [float: 180]
+      # For how long the raiders that have won leave, until those who are left are gone: they walk away to where nobody sees them.
+      withdrawDuration: [float: 240]
+    # What is measured every second, before anything else is done: in the order written, so a metric can use those before it.
+    metrics:
+      # How strong the residents and the raiders are, see EntityPowerSystem.
+      targetPower:
+      - !type:ForEachEntity
+        key: Query/RaidTargetsAlive/All
+        curves:
+        - add:
+          - !type:PrototypeCurve
+            preset: FighterPower
+      raidPower:
+      - !type:ForEachEntity
+        key: OwnedEngagement/RaidForce/Role/Raider/All
+        curves:
+        - add:
+          - !type:PrototypeCurve
+            preset: FighterPower
+      downFraction:
+      - !type:SearchQueryCount
+        query: RaidTargetsDown
+      - div: [var: targetsTotal]
+      deadFraction:
+      - !type:SearchQueryCount
+        query: RaidTargetsDead
+      - div: [var: targetsTotal]
+      # How much damage the raiders have taken all together: the camp is attacked when it is more than campDamage.
+      raidDamage:
+      - !type:ForEachEntity
+        key: OwnedEngagement/RaidForce/Role/Raider/All
+        curves:
+        - add:
+          - !type:MobDamage
+      # Those who can fight: the ones that are down are in the raid, but they are not in the formation, they are neither the force
+      # of the raid nor the morale of it.
+      raiders:
+      - !type:EngagementActors
+        engagement: RaidForce
+        role: Raider
+        conditions:
+        - !type:MobState
+          targetState: Alive
+      # Those who are down, they are neither the force nor counted in the formation, but the raiders have not lost them yet.
+      downRaiders:
+      - !type:EngagementActors
+        engagement: RaidForce
+        role: Raider
+        conditions:
+        - !type:MobState
+          targetState: Critical
+      aliveFraction:
+      - var: downRaiders
+      - mul: [var: downMoraleShare]
+      - add: [var: raiders]
+      - div: [var: raidersTotal]
+      pressure:
+      - !type:CurTimeSeconds
+      - minus: [var: lastKillAt]
+      - div: [var: stalemateTime]
+      morale:
+      - var: downFraction
+      - mul: [var: moraleKillBonus]
+      - add: [var: aliveFraction]
+      - minus: [var: pressure]
+  - type: Phases
+    phases:
+      # The raiders have come, but they do not go to the settlement at once: they camp where they are, close together, and only walk
+      # about a little (see the RaiderCamp goal), so that the residents have time to get ready. The camp is over when the time is out
+      # (campDuration, chosen at the start: campMin and a part of campSpread), or earlier if somebody attacks the raiders.
+      Camp:
+        tick:
+        # The place to keep to is chosen once, when all the raiders are there.
+        - !type:SetEngagementCenter
+          engagement: RaidForce
+          role: Raider
+        # The damage that the raiders come with is not an attack.
+        - !type:SetMathVariable
+          key: campBase
+          value:
+          - var: raidDamage
+          conditions:
+          - !type:MathCurveCondition
+            curves:
+            - var: campSettled
+            - !type:Threshold
+              lessThan: 1
+        - !type:SetMathVariable
+          key: campSettled
+          value:
+          - float: 1
+        transitions:
+        - to: Assault
+          when:
+          # Not before the damage that they have come with is known.
+          - !type:MathCurveCondition
+            curves:
+            - var: campSettled
+            - !type:Threshold
+              moreThan: 0
+          - !type:MathCurveCondition
+            curves:
+            - var: raidDamage
+            - minus: [var: campBase]
+            - minus: [var: campDamage]
+            - !type:Threshold
+              moreThan: 0
+        - to: Assault
+          after: [var: campDuration]
+        - when: &NoRaiders
+          - !type:MathCurveCondition
+            curves:
+            - var: raiders
+            - !type:Threshold
+              lessThan: 1
+          effects:
+          - !type:EndWorldRule
+            result: Failed
+      # The raiders come to the settlement and fight, but they only put the residents down. When most of the residents are down and
+      # the raiders are far stronger than those who still stand, the raid goes on to finish them (Finish). It is lost when the raiders
+      # are all dead, and when they lose heart they retreat.
+      Assault:
+        enter:
+        - !type:ApplyToEngagementActors
+          engagement: RaidForce
+          role: Raider
+          effects:
+          - !type:SetGoapFlag
+            key: Camping
+            value: false
+        transitions:
+        - to: Finish
+          when:
+          - !type:MathCurveCondition
+            curves:
+            - var: downFraction
+            - minus: [var: finishDownFraction]
+            - !type:Threshold
+              moreThan: 0
+          - !type:MathCurveCondition
+            curves:
+            - var: raidPower
+            - minus:
+              - var: targetPower
+              - mul: [var: finishRatio]
+            - !type:Threshold
+              moreThan: 0
+        - to: Withdraw
+          when: &Slain
+          - !type:MathCurveCondition
+            curves:
+            - var: deadFraction
+            - minus: [var: winDeadFraction]
+            - !type:Threshold
+              moreThan: 0
+        - to: Retreat
+          when:
+          - !type:MathCurveCondition
+            curves:
+            - var: morale
+            - minus: [var: retreatMorale]
+            - !type:Threshold
+              lessThan: 0
+        - when: *NoRaiders
+          effects:
+          - !type:EndWorldRule
+            result: Failed
+      # The victory is near and the raiders are much stronger, so they are no longer content with putting the residents down: each one
+      # goes by itself (they do not keep to the squads any more) to the nearest of the residents who are not dead yet, and finishes
+      # the down off, see the RaiderExecute goal. The raid is won when most of the residents are dead.
+      Finish:
+        enter:
+        - !type:ApplyToEngagementActors
+          engagement: RaidForce
+          role: Raider
+          effects:
+          - !type:SetGoapFlag
+            key: Executing
+        transitions:
+        - to: Withdraw
+          when: *Slain
+        - to: Withdraw
+          after: [var: finishDuration]
+        - to: Retreat
+          when:
+          - !type:MathCurveCondition
+            curves:
+            - var: morale
+            - minus: [var: retreatMorale]
+            - !type:Threshold
+              lessThan: 0
+        - when: *NoRaiders
+          effects:
+          - !type:EndWorldRule
+            result: Failed
+      # The raiders have lost heart and run. They leave the way that is the cheapest, round the settlements, and are gone where nobody
+      # observes them. The raid is lost when they are all gone, or when they have not got away in time (those who cannot leave in
+      # time are gone with the end of the raid).
+      Retreat:
+        enter:
+        - !type:NestedEffect
+          proto: RaidersRunAway
+        tick:
+        - !type:NestedEffect
+          proto: RaidersLeaveUnseen
+        transitions:
+        - to: Withdraw
+          when: *Slain
+        - when: *NoRaiders
+          effects:
+          - !type:EndWorldRule
+            result: Failed
+        - after: [var: retreatDuration]
+          effects:
+          - !type:EndWorldRule
+            result: Failed
+      # The raid has won. The raiders leave the same way as when they retreat, and are not seen to vanish: each is gone only where
+      # nobody observes it. The raid is over when they are all gone, or when they have not got away in time, such as the ones that
+      # are down.
+      Withdraw:
+        enter:
+        - !type:NestedEffect
+          proto: RaidersRunAway
+        tick:
+        - !type:NestedEffect
+          proto: RaidersLeaveUnseen
+        transitions:
+        - when: *NoRaiders
+          effects:
+          - !type:EndWorldRule
+            result: Won
+        - after: [var: withdrawDuration]
+          effects:
+          - !type:EndWorldRule
+            result: Won
+  - type: KeyedEntityEffectOnTrigger
+    effects:
+      started:
+      # What the raid is about is kept here once, the raiders read it from the raid, see Engagement/RaidForce/Owner/...
+      - !type:CopySettlementResidents
+      - !type:SetSettlementTarget
+      - !type:SetMathVariable
+        key: startedAt
+        value:
+        - !type:CurTimeSeconds
+      - !type:SetMathVariable
+        key: lastKillAt
+        value:
+        - !type:CurTimeSeconds
+      - !type:SetMathVariable
+        key: targetsTotal
+        value:
+        - !type:SearchQueryCount
+          query: RaidTargets
+      # How long the raiders camp before they go to the settlement.
+      - !type:SetMathVariable
+        key: campDuration
+        value:
+        - random:
+            max: 1
+        - mul: [var: campSpread]
+        - add: [var: campMin]
+      - !type:SetPhase
+        phase: Camp
+      # Every raider joins the raid, and its squad is made when all of them are there.
+      spawned:
+      - !type:SetMathVariable
+        key: raidersTotal
+        value:
+        - add: [float: 1]
+      # The raid owns the raiders and everything they carry, so they share the equipment: what one has, the others find.
+      # Only the things are owned: not the solutions of the bodies and the like.
+      - !type:OwnUser
+        whitelist:
+          components:
+          - Item
+      - !type:PlaceInGroup
+        group: RaidForce
+        roles: [Raider]
+      # It stays in the camp until the raid goes to the settlement, see the Camp phase.
+      - !type:ApplyToEngagementActors
+        engagement: RaidForce
+        role: Raider
+        effects:
+        - !type:SetGoapFlag
+          key: Camping
+      tick:
+      # The raiders are split into squads once, a little after they have come, and later the squads are only joined, see MergeGroups.
+      # Not before it is known what the raid is up against: the number of the squads depends on it.
+      - !type:FormGroups
+        onlyIfNone: true
+        conditions:
+        - !type:MathCurveCondition
+          curves:
+          - var: targetPower
+          - !type:Threshold
+            moreThan: 0
+        source: RaidForce
+        sourceRole: Raider
+        group: RaidSquad
+        maxGroups: 4
+        # A squad is a leader and the ones who stay with him: a weak settlement (the power of the residents is small) does not make a squad of
+        # every raider, each of them a leader with nobody to lead.
+        minMembers: 3
+        power:
+        - !type:PrototypeCurve
+          preset: FighterPower
+        minPower:
+        - var: targetPower
+        - mul: [var: squadPowerRatio]
+      - !type:MeasureGroups
+        group: RaidSquad
+        power:
+        - !type:PrototypeCurve
+          preset: FighterPower
+        threat:
+        - var: targetPower
+        stance:
+        - var: ratio
+        - minus: [var: holdRatio]
+        - !type:Threshold
+          moreThan: 0
+        - add:
+          - var: ratio
+          - minus: [var: rushRatio]
+          - !type:Threshold
+            moreThan: 0
+      # A squad that has been too weak for a while joins the closest squad, if it is near. The other squads stay as they are.
+      - !type:MergeGroups
+        group: RaidSquad
+        delay: 10
+        maxDistance: 30
+        weak:
+        - var: power
+        - minus:
+          - var: targetPower
+          - mul: [var: squadPowerRatio]
+          - mul: [var: mergeFraction]
+        - !type:Threshold
+          lessThan: 0
+      - !type:AssignGroupTargets
+        group: RaidSquad
+        targets: Query/RaidTargetsAlive/All
+        power:
+        - !type:PrototypeCurve
+          preset: FighterPower
+        # The target that nobody has goes to the squad that it costs the least: the closer, the cheaper, the more the squad has got for
+        # its strength, the dearer.
+        cost:
+        - var: distance
+        - mul:
+          - float: 1
+          - add:
+            - var: load
+            - div: [var: capacity]
+      RaidTargetsDown.added:
+      - !type:SetMathVariable
+        key: kills
+        value:
+        - add: [float: 1]
+      - !type:SetMathVariable
+        key: lastKillAt
+        value:
+        - !type:CurTimeSeconds
+      # A squad that has lost its leader gets a new one from the members.
+      RaidSquad.left.SquadLeader:
+      - !type:FillGroupRole
+        group: RaidSquad
+        role: SquadLeader
+        rank:
+        - !type:PrototypeCurve
+          preset: FighterPower
+      RaidForce.left.Raider:
+      - !type:SetMathVariable
+        key: losses
+        value:
+        - add: [float: 1]
+      # The raid cleans up after itself. Whoever is able to fight and is left when the raid is over is gone, with what it carries; the
+      # ones that are down are left where they lie, and so is their equipment, they are no longer the raid's. The situations of the
+      # raiders (the force and the squads) are gone with the ownership, they live for the sake of the raid.
+      ended:
+      - !type:ApplyToEngagementActors
+        engagement: RaidForce
+        role: Raider
+        effects:
+        - !type:DespawnEntity
+          conditions:
+          - !type:MobStateCondition
+            mobstate: Alive
+      - !type:RemoveOwnership
+
+# What the raiders do when they leave, see the phases of the raid.
+- type: entityEffect
+  id: RaidersRunAway
+  effects:
+  - !type:ApplyToEngagementActors
+    engagement: RaidForce
+    role: Raider
+    effects:
+    - !type:SetGoapFlag
+      key: Retreating
+
+# They are not seen to vanish: each is gone only where nobody observes it.
+- type: entityEffect
+  id: RaidersLeaveUnseen
+  effects:
+  - !type:ApplyToEngagementActors
+    engagement: RaidForce
+    role: Raider
+    effects:
+    - !type:DespawnEntity
+      conditions:
+      - !type:Unobserved

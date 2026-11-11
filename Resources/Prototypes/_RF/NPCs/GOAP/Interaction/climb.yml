@@ -1,0 +1,13 @@
+# Climbs onto what can be climbed, the goal of the path nodes of the profiles, see the Climbable rules.
+- type: goapCompound
+  id: Climb
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    actions:
+    - !type:Climb
+      targetKey: ClimbTarget
+    effects:
+      Climbed: true

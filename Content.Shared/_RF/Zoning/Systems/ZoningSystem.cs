@@ -565,7 +565,7 @@ public sealed partial class ZoningSystem : EntitySystem, IZoneConditionChecker
            && _zoneCreatorQuery.TryComp(player, out var creator)
            && Prototype(zone) is { } proto
            && creator.Zones.Contains(proto.ID)
-           && _ownership.HasOwner(zone.Owner, player);
+           && _ownership.IsOwnedBy(zone.Owner, player);
 }
 
 public interface IZoneConditionChecker

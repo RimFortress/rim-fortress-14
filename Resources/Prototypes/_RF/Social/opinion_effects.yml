@@ -6,6 +6,15 @@
   effect: -5
   maxEffect: -100
 
+# Whoever has just hit the entity: it is a threat that is run from (see the Flee goal), for as long as the entity remembers it. Every hit
+# extends it, and it is not forgotten for good, unlike OpinionAttacked, which is the grudge.
+- type: socialEffect
+  id: OpinionRecentlyAttacked
+  name: opinion-effect-recently-attacked-name
+  description: opinion-effect-recently-attacked-desc
+  duration: 24m
+  effect: -10
+
 - type: socialEffect
   id: OpinionHealed
   name: opinion-effect-healed-name

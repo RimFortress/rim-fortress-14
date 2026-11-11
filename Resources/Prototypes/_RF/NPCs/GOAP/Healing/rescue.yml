@@ -1,0 +1,29 @@
+# The casualty is taken out of the fire: pulled to a place where nobody shoots at it (see the Shelter query), and left there. It
+# is treated there, see the Healing.
+- type: goapCompound
+  id: Rescue
+  tasks:
+  - preconditions:
+    - Query/RescueTarget != null
+    actions:
+    - !type:MoveTo
+      targetEntityKey: &Casualty Query/RescueTarget
+      rangeKey: InteractRange
+    - !type:Pull
+      targetKey: *Casualty
+    effects:
+      CasualtyPulled: true
+
+  - preconditions:
+    - CasualtyPulled == true
+    actions:
+    - !type:PickAccessible
+      rangeKey: ShelterRange
+      query: Shelter
+    - !type:MoveTo
+      rangeKey: InteractRange
+      removeKeyOnFinish: false
+    - !type:MovePulling
+    - !type:UnPull
+    effects:
+      CasualtyRescued: true

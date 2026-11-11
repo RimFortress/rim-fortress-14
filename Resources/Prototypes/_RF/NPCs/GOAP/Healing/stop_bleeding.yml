@@ -4,9 +4,8 @@
   - preconditions:
     - Query/BleedHealing || Query/HeatMelees != null
     actions:
-    - !type:EntityCoords
-      targetKey: Query/BleedHealing || Query/HeatMelees
     - !type:MoveTo
+      targetEntityKey: Query/BleedHealing || Query/HeatMelees
       rangeKey: InteractRange
     - !type:Pickup
       targetKey: Query/BleedHealing || Query/HeatMelees
@@ -17,9 +16,8 @@
     - Query/BleedingFriend != null
     - BleedHealingPickedUp == true
     actions:
-    - !type:EntityCoords
-      targetKey: Query/BleedingFriend
     - !type:MoveTo
+      targetEntityKey: Query/BleedingFriend
       rangeKey: InteractRange
     effects:
       NearBleedingFriend: true

@@ -21,7 +21,10 @@
 - type: utilityAiGoal
   id: Deconstruct
   color: "#945A1C"
+  conditions:
+  - CombatMode == false
   scoreCurves:
-  - float: 1
+  # Not 1: the orders of the player have the best score there is and are not swapped for anything, the chores are.
+  - float: 0.99
   goalState:
     TargetDeconstruct: true

@@ -24,7 +24,8 @@ public sealed partial class NotifyOnGoalGivenSystem : EntitySystem
 
         var desc = Loc.GetString(proto.DescId, ("target", _notifications.GetEntityString(ent)));
 
-        foreach (var owner in _ownership.GetOwners(ent))
+        // The pops belong to their settlements, which belong to the player that is told.
+        foreach (var owner in _ownership.GetOwnersRecursively(ent))
         {
             if (HasComp<NotificationComponent>(owner))
                 _notifications.SendNotification(owner, protoId, desc: desc);

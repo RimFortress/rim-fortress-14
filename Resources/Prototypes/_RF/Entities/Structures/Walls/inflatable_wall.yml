@@ -1,0 +1,5 @@
+- type: !PartialOnly entity
+  id: InflatableDoor
+  components:
+  - type: PathTags
+    tags: [Door]

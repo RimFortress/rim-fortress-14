@@ -3,7 +3,6 @@ using System.Numerics;
 using Content.Server._RF.Equipment;
 using Content.Server._RF.NPC.Executable.Systems;
 using Content.Server._RF.Parallax.Fog;
-using Content.Server.Administration.Managers;
 using Content.Server.Mind;
 using Content.Server.Parallax;
 using Content.Server.Preferences.Managers;
@@ -11,10 +10,8 @@ using Content.Server.Station.Systems;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared._RF.World;
 using Content.Shared._RF.CCVar;
-using Content.Shared._RF.NPC.Systems;
 using Content.Shared._RF.Parallax.Fog;
 using Content.Shared._RF.World.Components;
-using Content.Shared.Administration;
 using Content.Shared.Light.Components;
 using Content.Shared.Pinpointer;
 using Robust.Server.GameObjects;
@@ -33,38 +30,19 @@ namespace Content.Server._RF.World;
 /// </summary>
 public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSystem
 {
-    [Dependency] private IAdminManager _admin = default!;
-    [Dependency] private MindSystem _mind = default!;
-    [Dependency] private BiomeSystem _biome = default!;
-    [Dependency] private MapSystem _map = default!;
-    [Dependency] private IPrototypeManager _prototype = default!;
-    [Dependency] private IRobustRandom _random = default!;
-    [Dependency] private IServerPreferencesManager _preferences = default!;
-    [Dependency] private IPlayerManager _player = default!;
-    [Dependency] private StationSpawningSystem _station = default!;
-    [Dependency] private EntityLookupSystem _lookup = default!;
-    [Dependency] private IConfigurationManager _cvar = default!;
-    [Dependency] private IPlayerEquipmentManager _equipment = default!;
-    [Dependency] private ExecutableGoalSystem _executable = default!;
-    [Dependency] private FogOfWarSystem _faw = default!;
-    [Dependency] private OwnershipSystem _ownership = default!;
-
-    private readonly HashSet<ICommonSession> _debugSubscribers = new();
-
-    [SubscribeNetworkEvent]
-    private void OnDebugRequest(WorldDebugInfoRequest msg, EntitySessionEventArgs args)
-    {
-        if (!_admin.HasAdminFlag(args.SenderSession, AdminFlags.Debug))
-        {
-            _debugSubscribers.Remove(args.SenderSession);
-            return;
-        }
-
-        if (_debugSubscribers.Add(args.SenderSession))
-            return;
-
-        _debugSubscribers.Remove(args.SenderSession);
-    }
+    [Dependency] private MindSystem _mind = null!;
+    [Dependency] private BiomeSystem _biome = null!;
+    [Dependency] private MapSystem _map = null!;
+    [Dependency] private IPrototypeManager _prototype = null!;
+    [Dependency] private IRobustRandom _random = null!;
+    [Dependency] private IServerPreferencesManager _preferences = null!;
+    [Dependency] private IPlayerManager _player = null!;
+    [Dependency] private StationSpawningSystem _station = null!;
+    [Dependency] private EntityLookupSystem _lookup = null!;
+    [Dependency] private IConfigurationManager _cvar = null!;
+    [Dependency] private IPlayerEquipmentManager _equipment = null!;
+    [Dependency] private ExecutableGoalSystem _executable = null!;
+    [Dependency] private FogOfWarSystem _faw = null!;
 
     public EntityUid InitializeWorld(EntityUid uid, RimFortressRuleComponent rule)
     {
@@ -135,11 +113,16 @@ public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSyste
             beacon.Text = MetaData(pop).EntityName;
 
             _faw.AddFogClearer(pop, player);
-            _ownership.AddOwnership(pop, owner: player);
         }
 
         player.Comp.Pops.AddRange(pops);
         Dirty(player);
+        Settlements.MarkDirty(player);
+
+        foreach (var pop in pops)
+        {
+            RaiseLocalEvent(player.Owner, new PopAddedEvent(pop));
+        }
     }
 
     /// <summary>
@@ -157,10 +140,11 @@ public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSyste
         beacon.Text = MetaData(pop).EntityName;
 
         _faw.AddFogClearer(pop, player);
-        _ownership.AddOwnership(pop, owner: player);
 
         player.Comp.Pops.Add(pop);
         Dirty(player);
+        Settlements.MarkDirty(player);
+        RaiseLocalEvent(player.Owner, new PopAddedEvent(pop));
     }
 
     /// <summary>
@@ -186,6 +170,8 @@ public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSyste
         _faw.RemoveFogClearer(pop, player);
 
         Dirty(player);
+        Settlements.MarkDirty(player);
+        RaiseLocalEvent(player.Owner, new PopRemovedEvent(pop));
         return true;
     }
 
@@ -234,7 +220,8 @@ public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSyste
                     var randomOffset = new Vector2(_random.NextFloat(-0.35f, 0.35f), _random.NextFloat(-0.35f, 0.35f));
                     var equip = Spawn(protoId, new EntityCoordinates(tileCenter.EntityId, tileCenter.Position + randomOffset));
 
-                    _ownership.AddOwnership(equip, owner: player);
+                    // It is the settlement's if there is one where it lies, and waits for one if there is not.
+                    Settlements.Claim(player, equip, Transform(equip).Coordinates);
                 }
             }
         }
@@ -255,24 +242,5 @@ public sealed partial class RimFortressWorldSystem : SharedRimFortressWorldSyste
         AddPops(player, pops);
 
         player.Comp.GotRoundstartPops = true;
-    }
-
-    public override void Update(float frameTime)
-    {
-        base.Update(frameTime);
-
-        if (_debugSubscribers.Count == 0)
-            return;
-
-        var coords = AllPlayersSettlements()
-            .Select(x
-                => (GetNetEntity(x.Key), x.Value.Select(y => GetNetCoordinates(y)).ToList()))
-            .ToDictionary();
-        var msg = new SettlementCoordinatesMessage(coords);
-
-        foreach (var subscriber in _debugSubscribers)
-        {
-            RaiseNetworkEvent(msg, subscriber);
-        }
     }
 }

@@ -1,3 +1,4 @@
+using Content.Shared._RF.NPC.Engagement.Components;
 using Content.Shared._RF.NPC.Engagement.Prototypes;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Search.Prototypes;
@@ -102,6 +103,11 @@ public partial class GoapState
     /// </summary>
     public static readonly StateKey<bool> NavClimb = "NavClimb";
 
+    /// <summary>
+    /// Does the NPC close the doors it has gone through, if they do not close by themselves.
+    /// </summary>
+    public static readonly StateKey<bool> CloseDoors = RegisterDefault("CloseDoors", false);
+
     public static readonly StateKey<float> MovementRange = RegisterDefault("MovementRange", 0.333f);
 
     public static readonly StateKey<float> RotateSpeed = RegisterDefault("RotateSpeed", float.MaxValue);
@@ -119,6 +125,13 @@ public partial class GoapState
     /// The maximum distance at which an agent can carry on a conversation.
     /// </summary>
     public static readonly StateKey<float> ConversationRange = RegisterDefault("ConversationRange", 2.5f);
+
+    /// <summary>
+    /// How close to the spot of its own at a conversation (see <c>ConversationPlaceEvent</c>) a participant comes. It is not the range of the
+    /// whole place: that would let all of them stop in a crowd at its edge; and it is not tight, an agent that is to stop in a few centimeters
+    /// creeps up to the spot for a long time.
+    /// </summary>
+    public static readonly StateKey<float> ConversationSpotRange = RegisterDefault("ConversationSpotRange", 0.5f);
 
     /// <summary>
     /// Default key for storing the action queue.
@@ -169,7 +182,7 @@ public partial class GoapState
     /// Is the owner's active hand free?
     /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
     /// </summary>
-    public static readonly StateKey<bool> ActiveHandFree = RegisterEcsDefault<bool>("InContainer");
+    public static readonly StateKey<bool> ActiveHandFree = RegisterEcsDefault<bool>("ActiveHandFree");
 
     /// <summary>
     /// Stores the entity In the active hand.
@@ -182,6 +195,12 @@ public partial class GoapState
     /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
     /// </summary>
     public static readonly StateKey<bool> Buckled = RegisterEcsDefault<bool>("Buckled");
+
+    /// <summary>
+    /// Stores whether the owner is on top of something it has climbed onto.
+    /// The value of this key can be got via <see cref="SharedGoapSystem.TryGetValue{T}(GoapState, StateKey{T}, out T?)"/>.
+    /// </summary>
+    public static readonly StateKey<bool> Climbing = RegisterEcsDefault<bool>("Climbing");
 
     /// <summary>
     /// Stores whether the owner is being pulled or not.
@@ -229,13 +248,13 @@ public partial class GoapState
     /// Returns true if the agent is engaged in the target situation.
     /// </summary>
     public static readonly DomainKey InEngagementDomain
-        = ProtoDomain<EngagementPrototype>("ProtoId", "Engagement/ProtoId/In");
+        = EntityProtoDomain<EngagementComponent>("ProtoId", "Engagement/ProtoId/In");
 
     /// <summary>
     /// Returns true if the agent occupies the target role in the target situation.
     /// </summary>
     public static readonly DomainKey InEngagementRoleDomain
-        = ProtoDomain<EngagementPrototype, EngagementRolePrototype>(
+        = EntityProtoDomain<EngagementComponent, EngagementRolePrototype>(
             "ProtoId",
             "RoleId",
             "Engagement/ProtoId/Role/RoleId/In");
@@ -244,19 +263,68 @@ public partial class GoapState
     /// Returns the situation of the target type in which the agent is engaged.
     /// </summary>
     public static readonly DomainKey EngagementDomain
-        = ProtoDomain<EngagementPrototype>("ProtoId", "Engagement/ProtoId");
+        = EntityProtoDomain<EngagementComponent>("ProtoId", "Engagement/ProtoId");
+
+    /// <summary>
+    /// Returns what the key of the state of the owner of the situation of the target type, in which the agent is engaged, is. It is
+    /// how the participants share what the situation is about, such as the residents that a raid is for: the owner of the
+    /// situation, an event, keeps it once, and it is not copied to the participants. The type of the value is the one of the key
+    /// that is asked for.
+    /// </summary>
+    public static readonly DomainKey EngagementOwnerDomain
+        = EntityProtoKeyDomain<EngagementComponent>("ProtoId", "Key", "Engagement/ProtoId/Owner/Key");
+
+    /// <summary>
+    /// Returns what the key of the state of the situation itself, of the target type, in which the agent is engaged, is. The
+    /// situation has the state if its prototype says so (<c>Components</c>), and it is where what is only for the participants
+    /// is kept, such as the targets that a squad is given. The type of the value is the one of the key that is asked for.
+    /// </summary>
+    public static readonly DomainKey EngagementStateDomain
+        = EntityProtoKeyDomain<EngagementComponent>("ProtoId", "Key", "Engagement/ProtoId/State/Key");
+
+    /// <summary>
+    /// Returns a variable (<c>MathVariables</c>) of the situation of the target type in which the agent is engaged, a number.
+    /// It is how a squad tells its participants how strong it is.
+    /// </summary>
+    public static readonly DomainKey EngagementVarDomain
+        = EntityProtoKeyDomain<EngagementComponent>("ProtoId", "Name", "Engagement/ProtoId/Var/Name");
+
+    /// <summary>
+    /// Returns all the entities that play the target role in the situation of the target type in which the agent is engaged.
+    /// </summary>
+    public static readonly DomainKey EngagementRoleAllDomain
+        = EntityProtoDomain<EngagementComponent, EngagementRolePrototype>(
+            "ProtoId",
+            "RoleId",
+            "Engagement/ProtoId/Role/RoleId/All");
+
+    /// <summary>
+    /// Returns the participants in all the roles of all the situations of the target type that the agent owns, see
+    /// <c>OwnershipSystem</c>.
+    /// </summary>
+    public static readonly DomainKey OwnedEngagementAllDomain
+        = EntityProtoDomain<EngagementComponent>("ProtoId", "OwnedEngagement/ProtoId/All");
+
+    /// <summary>
+    /// Returns the participants in the target role of all the situations of the target type that the agent owns.
+    /// </summary>
+    public static readonly DomainKey OwnedEngagementRoleAllDomain
+        = EntityProtoDomain<EngagementComponent, EngagementRolePrototype>(
+            "ProtoId",
+            "RoleId",
+            "OwnedEngagement/ProtoId/Role/RoleId/All");
 
     /// <summary>
     /// Returns the started situation of the target type in which the agent is engaged.
     /// </summary>
     public static readonly DomainKey EngagementStartedDomain
-        = ProtoDomain<EngagementPrototype>("ProtoId", "Engagement/ProtoId/Started");
+        = EntityProtoDomain<EngagementComponent>("ProtoId", "Engagement/ProtoId/Started");
 
     /// <summary>
     /// Returns the entity that plays a target role in the situation in which the agent consists.
     /// </summary>
     public static readonly DomainKey EngagementRoleDomain
-        = ProtoDomain<EngagementPrototype, EngagementRolePrototype>(
+        = EntityProtoDomain<EngagementComponent, EngagementRolePrototype>(
             "ProtoId",
             "RoleId",
             "Engagement/ProtoId/Role/RoleId");
@@ -265,19 +333,19 @@ public partial class GoapState
     /// Returns the situation entity of the target type to which the agent has been invited.
     /// </summary>
     public static readonly DomainKey EngagementInvitedDomain
-        = ProtoDomain<EngagementPrototype>("ProtoId", "Engagement/Invited/ProtoId");
+        = EntityProtoDomain<EngagementComponent>("ProtoId", "Engagement/Invited/ProtoId");
 
     /// <summary>
     /// Returns the entity that invited the agent into a situation of the target type.
     /// </summary>
     public static readonly DomainKey EngagementInvitedInviterDomain
-        = ProtoDomain<EngagementPrototype>("ProtoId", "Engagement/Invited/ProtoId/Inviter");
+        = EntityProtoDomain<EngagementComponent>("ProtoId", "Engagement/Invited/ProtoId/Inviter");
 
     /// <summary>
     /// Returns the situation entity of the target type to which the agent has been invited to a specific role.
     /// </summary>
     public static readonly DomainKey EngagementInvitedRoleDomain
-        = ProtoDomain<EngagementPrototype, EngagementRolePrototype>(
+        = EntityProtoDomain<EngagementComponent, EngagementRolePrototype>(
         "ProtoId",
             "RoleId",
             "Engagement/Invited/ProtoId/Role/RoleId");
@@ -286,7 +354,7 @@ public partial class GoapState
     /// Returns the entity that invited the agent into a situation of the target type to a specific role.
     /// </summary>
     public static readonly DomainKey EngagementInvitedRoleInviterDomain
-        = ProtoDomain<EngagementPrototype, EngagementRolePrototype>(
+        = EntityProtoDomain<EngagementComponent, EngagementRolePrototype>(
             "ProtoId",
             "RoleId",
             "Engagement/Invited/ProtoId/Role/RoleId/Inviter");
@@ -295,7 +363,7 @@ public partial class GoapState
     /// Returns an entity that has been invited into a situation of a specific type to perform a target role.
     /// </summary>
     public static readonly DomainKey EngagementInvitesRoleInvitedDomain
-        = ProtoDomain<EngagementPrototype, EngagementRolePrototype>(
+        = EntityProtoDomain<EngagementComponent, EngagementRolePrototype>(
             "ProtoId",
             "RoleId",
             "Engagement/Invites/ProtoId/Role/RoleId/Invited");

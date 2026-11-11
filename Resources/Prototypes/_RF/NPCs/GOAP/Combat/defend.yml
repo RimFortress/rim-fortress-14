@@ -1,0 +1,21 @@
+# Fights back at whoever has hit the agent and is next to it, with what it has in its hands (the fists, if nothing): it is caught, and to run
+# from the one who is as fast is to be hit in the back. The combat mode is on for the fight only (the Melee action puts it back as it was when it is over), and the goal is over when the one who hit
+# is out of reach, see the DefendSelf goal.
+- type: goapCompound
+  id: DefendSelf
+  tasks:
+  - preconditions:
+    - InContainer == false
+    - Buckled == false
+    - Pulled == false
+    - Query/Aggressor != null
+    actions:
+    - !type:MoveTo
+      targetEntityKey: Query/Aggressor
+      rangeKey: MeleeRange
+      sprint: true
+    - !type:Melee
+      targetKey: Query/Aggressor
+      footwork: {}
+    effects:
+      Defended: true

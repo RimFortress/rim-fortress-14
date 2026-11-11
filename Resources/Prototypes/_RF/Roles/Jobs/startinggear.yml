@@ -57,6 +57,7 @@
     shoes: ClothingShoesColorBlack
   storage:
     back:
+      - Crowbar
       - DrinkWaterBottleFull
       - FoodTinMRE
   inhand:
@@ -110,6 +111,7 @@
     shoes: ClothingShoesLeather
   storage:
     back:
+      - Crowbar
       - MedkitFilled
       - BoxMRE
   inhand:

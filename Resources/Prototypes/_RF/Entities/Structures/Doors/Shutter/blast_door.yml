@@ -1,0 +1,30 @@
+- type: !PartialOnly entity
+  id: BlastDoor
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: BlastDoorOpen
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: BlastDoorXeno
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: BlastDoorXenoOpen
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: BlastDoorXenoborg
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: BlastDoorXenoborgOpen
+  components:
+  - type: PathTags
+    tags: [Door]

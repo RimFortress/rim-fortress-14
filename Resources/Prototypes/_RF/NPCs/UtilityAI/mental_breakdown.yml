@@ -5,10 +5,12 @@
   - minus: [float: 1]
   - !type:Abs
   - minus: [float: 0.5]
-  - div: [float: 2]
+  - clamp: {min: 0, max: 1}
   - pow: [float: 2]
   conditions:
   - CombatMode == false
+  - !type:Mood
+    lessThan: -20
   - !type:Mood
     hasEffects:
     - MoodMentalBreakdown

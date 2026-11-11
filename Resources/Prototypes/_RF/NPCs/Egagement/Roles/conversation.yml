@@ -1,6 +1,9 @@
 - type: engagementRole
   id: BaseDialogRole
   abstract: true
+  stayConditions:
+  - !type:MobState
+    targetState: Alive
   onStart:
     InConversation: true
   onFinishRemove:
@@ -9,6 +12,9 @@
 - type: engagementRole
   id: BaseDialogInitiator
   initiatorOnly: true
+  stayConditions:
+  - !type:MobState
+    targetState: Alive
   conditionsFor:
     BaseDialogResponder:
     - !type:Opinion

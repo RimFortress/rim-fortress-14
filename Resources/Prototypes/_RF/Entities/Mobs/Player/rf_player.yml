@@ -11,6 +11,10 @@
     layers:
     - state: animated
       shader: unshaded
+  - type: SettlementTracker
+    residentItems:
+      components:
+      - Item
   - type: ContentEye
     maxZoom: 6,6
   - type: Eye

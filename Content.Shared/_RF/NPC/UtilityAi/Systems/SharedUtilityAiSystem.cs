@@ -26,6 +26,23 @@ public abstract partial class SharedUtilityAiSystem : EntitySystem
     [SubscribeLocalEvent]
     private void OnGoapPlaningFailed(Entity<UtilityAiComponent> ent, ref GoapPlaningFailed args)
     {
+        // The other goal cannot be done, and the goal put aside has nothing to wait for: it fails with it.
+        if (ent.Comp.SuspendedGoal is { } suspended)
+        {
+            ent.Comp.SuspendedGoal = null;
+            ent.Comp.SuspendedKeys.Clear();
+
+            if (Proto.TryIndex(ent.Comp.CurrentGoal, out var other) && TryComp(ent, out GoapComponent? otherGoap))
+            {
+                foreach (var key in other.TempKeys)
+                {
+                    Goap.RemoveKey<object>(otherGoap.State, key);
+                }
+            }
+
+            ent.Comp.CurrentGoal = suspended;
+        }
+
         ReleaseCaptured(ent.Owner);
         DoGoalFail(ent);
     }
@@ -33,6 +50,41 @@ public abstract partial class SharedUtilityAiSystem : EntitySystem
     [SubscribeLocalEvent]
     private void OnGoapPlanFinished(Entity<UtilityAiComponent> ent, ref GoapPlanFinished args)
     {
+        // The goal is put aside and is not over: nothing is cleared, it goes on after the other goal.
+        if (ent.Comp.Suspending)
+        {
+            ent.Comp.Suspending = false;
+            return;
+        }
+
+        if (ent.Comp.SuspendedGoal is { } suspended)
+        {
+            ent.Comp.SuspendedGoal = null;
+
+            if (Proto.TryIndex(ent.Comp.CurrentGoal, out var other) && TryComp(ent, out GoapComponent? otherGoap))
+            {
+                foreach (var key in other.TempKeys)
+                {
+                    Goap.RemoveKey<object>(otherGoap.State, key);
+                }
+            }
+
+            ReleaseCaptured(ent.Owner);
+
+            // The goal goes on where it left off.
+            if (args.Reason == GoapPlanFinishReason.Finished)
+            {
+                RestoreSuspendedKeys(ent.Owner, ent.Comp);
+                SetGoal(ent.Owner, suspended);
+                return;
+            }
+
+            ent.Comp.SuspendedKeys.Clear();
+
+            // The other goal has not been reached, and neither has this one: it ends the same way.
+            ent.Comp.CurrentGoal = suspended;
+        }
+
         // Removing temp keys
         if (Proto.TryIndex(ent.Comp.CurrentGoal, out var proto)
             && TryComp(ent, out GoapComponent? goap))
@@ -199,6 +251,68 @@ public abstract partial class SharedUtilityAiSystem : EntitySystem
     }
 
     /// <summary>
+    /// Puts the current goal of the agent aside and gives it another one, for example, one that has to be done on the
+    /// way. The goal put aside is not finished, nothing that depends on that happens, and it is set again when the other
+    /// goal is finished. If the other goal is not reached, the goal put aside ends the same way.
+    /// </summary>
+    /// <param name="ent">GOAP agent entity.</param>
+    /// <param name="protoId">The other goal.</param>
+    [PublicAPI]
+    public void SuspendGoal(Entity<UtilityAiComponent?, GoapComponent?> ent, ProtoId<UtilityAiGoalPrototype> protoId)
+    {
+        if (!Resolve(ent, ref ent.Comp1, ref ent.Comp2))
+            return;
+
+        // The goal that is already put aside stays the one to go back to.
+        if (ent.Comp1.SuspendedGoal == null && ent.Comp1.CurrentGoal is { } current)
+        {
+            ent.Comp1.SuspendedGoal = current;
+            ent.Comp1.SuspendedKeys.Clear();
+
+            // What belongs to the goal is kept: the actions clean up after themselves when the plan is given up, such as a
+            // movement that forgets its target, and the other goal can use the same keys for its own ends.
+            var keys = new HashSet<string>();
+
+            if (Proto.TryIndex(current, out var proto))
+            {
+                foreach (var key in proto.TempKeys)
+                {
+                    keys.Add(key);
+                }
+            }
+
+            var ev = new UtilityAiSuspendedKeys(current, keys);
+            RaiseLocalEvent(ent, ref ev);
+
+            foreach (var key in keys)
+            {
+                if (SharedGoapSystem.TryGetValueNoEcsDefaults<object>(ent.Comp2.State, key, out var value))
+                    ent.Comp1.SuspendedKeys[key] = value;
+            }
+        }
+
+        if (ent.Comp2.Plan != null)
+        {
+            ent.Comp1.Suspending = true;
+            Goap.PlanShutdown((ent.Owner, ent.Comp2), GoapPlanFinishReason.Interrupted);
+            RestoreSuspendedKeys(ent.Owner, ent.Comp1, ent.Comp2);
+        }
+
+        SetGoal(ent, protoId);
+    }
+
+    private void RestoreSuspendedKeys(EntityUid uid, UtilityAiComponent comp, GoapComponent? goap = null)
+    {
+        if (!Resolve(uid, ref goap))
+            return;
+
+        foreach (var (key, value) in comp.SuspendedKeys)
+        {
+            goap.State.SetValue<object>(key, value);
+        }
+    }
+
+    /// <summary>
     /// Returns the agent's current Utility Ai goal.
     /// </summary>
     /// <param name="ent">GOAP agent entity.</param>
@@ -243,6 +357,9 @@ public abstract partial class SharedUtilityAiSystem : EntitySystem
                 continue;
 
             var score = GetScore(ent, goal);
+
+            if (score <= 0f)
+                continue;
 
             // ReSharper disable once CompareOfFloatsByEqualityOperator
             if (score == 1f)

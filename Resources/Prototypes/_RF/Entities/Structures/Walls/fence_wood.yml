@@ -1,0 +1,22 @@
+- type: !PartialOnly entity
+  id: BaseFenceWood
+  components:
+  - type: PathTags
+    tags: [Climbable]
+
+- type: !PartialOnly entity
+  id: BaseFenceWoodSmall
+  components:
+  - type: PathTags
+    tags: [Climbable]
+
+- type: !PartialOnly entity
+  id: FenceWoodHighGate
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: FenceWoodSmallGate
+  components:
+  - type: PathTags
+    tags: [Door]

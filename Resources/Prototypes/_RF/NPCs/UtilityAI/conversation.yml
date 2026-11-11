@@ -3,6 +3,7 @@
   parent: BaseUtilityAiGoal
   color: "#D3D3D3"
   conditions:
+  - CombatMode == false
   - InConversation != true
   scoreCurves:
   - preset: UAIScoreNeeds
@@ -14,11 +15,11 @@
   # If not invites: x * 0
   - mul:
     - !type:EngagementInvites
-      dataset: BasicConversationEngagements
+      dataset: BasicConversations
     - clamp: {max: 1}
   - div:
     - !type:EngagementMembership
-      dataset: BasicConversationEngagements
+      dataset: BasicConversations
     - add: [float: 1]
     - pow: [float: 2]
   goalState:
@@ -29,6 +30,7 @@
   color: "#D3D3D3"
   parent: BaseUtilityAiGoal
   conditions:
+  - CombatMode == false
   - InConversation != true
   failPolicy: Cooldown
   scoreCurves:
@@ -37,12 +39,12 @@
       need:
       - !type:NeedLevel
         need: Socialization
+  # The more invitations the agent has, the more it is for accepting them. How many conversations it is in does not count here: the
+  # conversation it has started itself is one of them, and the goal would be worth less for it than before, and be given up for any
+  # other, with the conversation torn down. The one that is in a conversation already does not start another, see the conditions.
   - div:
-    - !type:EngagementMembership
-      dataset: BasicConversationEngagements
-    - add:
-      - !type:EngagementInvites
-        dataset: BasicConversationEngagements
+    - !type:EngagementInvites
+      dataset: BasicConversations
     - add: [float: 1]
     - pow: [float: 2]
   goalState:
@@ -53,7 +55,8 @@
   color: "#D3D3D3"
   conditions:
   - InConversation == true
+  - CombatMode == false
   scoreCurves:
-  - float: 1
+  - float: 0.99
   goalState:
     ConversationFinished: true

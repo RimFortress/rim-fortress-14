@@ -37,8 +37,8 @@ public sealed partial class EngagementMembershipCurveSystem : MathCurveSystem<En
 
         foreach (var (uid, _) in comp.Membership)
         {
-            if (_engageQuery.TryComp(uid, out var engageComp)
-                && prototypes.Contains(engageComp.Kind.Id))
+            if (_engageQuery.HasComp(uid)
+                && prototypes.Contains(Prototype(uid)?.ID ?? ""))
                 count++;
         }
 

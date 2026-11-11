@@ -1,0 +1,15 @@
+- type: !PartialOnly entity
+  id: BaseFirelock
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: FirelockGlass
+  components:
+  - type: PathTags
+    tags: [Door]
+- type: !PartialOnly entity
+  id: FirelockEdge
+  components:
+  - type: PathTags
+    tags: [Door]

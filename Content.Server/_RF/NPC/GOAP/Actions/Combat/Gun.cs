@@ -4,7 +4,6 @@ using Content.Server._RF.NPC.Search.Systems;
 using Content.Server._RF.NPC.Systems;
 using Content.Server.Hands.Systems;
 using Content.Server.NPC.Components;
-using Content.Server.NPC.Pathfinding;
 using Content.Server.Wieldable;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
@@ -95,19 +94,10 @@ public sealed partial class Gun : BaseGoapAction<Gun>
     public static readonly StateKey<bool> MovingToMagazineKey = "MovingToMagazine";
 
     /// <summary>
-    /// Where the pathfinding result will be stored (if applicable).
-    /// </summary>
-    [ViewVariables]
-    public static readonly StateKey<PathResultEvent> PathfindKey = "GunMovementPathfinding";
-
-    /// <summary>
     /// The key that unlocks the found store, which should be picked up.
     /// </summary>
     [ViewVariables]
     public static readonly StateKey<EntityUid> NearbyMagazineKey = "NearbyMagazine";
-
-    [ViewVariables]
-    public static readonly StateKey<JukeType> PreviousJukeTypeKey = "PreviousJukeType";
 }
 
 public sealed partial class GunActionSystem : GoapActionSystem<Gun>
@@ -133,12 +123,10 @@ public sealed partial class GunActionSystem : GoapActionSystem<Gun>
     [Dependency] private EntityQuery<PhysicsComponent> _physicsQuery;
     [Dependency] private EntityQuery<TransformComponent> _xformQuery;
     [Dependency] private EntityQuery<RechargeBasicEntityAmmoComponent> _rechargeQuery;
-    [Dependency] private EntityQuery<NPCSteeringComponent> _steeringQuery;
     [Dependency] private EntityQuery<ItemSlotsComponent> _slotsQuery;
     [Dependency] private EntityQuery<WieldableComponent> _wieldQuery;
     [Dependency] private EntityQuery<GunRequiresWieldComponent> _wieldRequireQuery;
     [Dependency] private EntityQuery<ChamberMagazineAmmoProviderComponent> _chamberQuery;
-    [Dependency] private EntityQuery<NPCJukeComponent> _jukeQuery;
 
     private static readonly ProtoId<SearchQueryPrototype> InventoryMagazineQuery = "InventoryMagazine";
     private static readonly ProtoId<SearchQueryPrototype> NearbyMagazineQuery = "NearbyMagazine";
@@ -172,7 +160,6 @@ public sealed partial class GunActionSystem : GoapActionSystem<Gun>
         Set(ent, Gun.TargetInLosKey, false);
         Set(ent, Gun.MovingToMagazineKey, false);
         Remove(ent, Gun.NearbyMagazineKey);
-        Remove(ent, Gun.PreviousJukeTypeKey);
         NpcTimingSystem.ClearQueue(ent);
 
         return true;
@@ -188,8 +175,8 @@ public sealed partial class GunActionSystem : GoapActionSystem<Gun>
         Remove(ent, Gun.TargetInLosKey);
         Remove(ent, Gun.MovingToMagazineKey);
         Remove(ent, Gun.NearbyMagazineKey);
-        Remove(ent, Gun.PreviousJukeTypeKey);
         NpcTimingSystem.ClearQueue(ent);
+        _moveTo.Stop(ent);
     }
 
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, Gun action)
@@ -214,33 +201,18 @@ public sealed partial class GunActionSystem : GoapActionSystem<Gun>
             if (!TryGet(ent, Gun.NearbyMagazineKey, out var ammoUid))
                 return GoapActionResult.Failed;
 
-            var result = _moveTo.UpdateMovement(ent,
-                this,
-                Transform(ammoUid).Coordinates,
-                Gun.PathfindKey,
-                GoapState.InteractRange);
+            var result = _moveTo.Move(ent, this, ammoUid, GoapState.InteractRange);
 
             if (result != GoapActionResult.Finished)
                 return result;
 
-            _moveTo.ShutdownMovement(ent, this, Gun.PathfindKey);
+            _moveTo.Stop(ent);
             Set(ent, Gun.MovingToMagazineKey, false);
-
-            if (TryGet(ent, Gun.PreviousJukeTypeKey, out var type))
-                EnsureComp<NPCJukeComponent>(ent).JukeType = type;
-
-            Remove(ent, Gun.PreviousJukeTypeKey);
             return ReplaceMagazine(ent, ammoUid);
         }
 
         if (!TryGet(ent, Gun.NextLosCheckKey, out var nextLosCheck))
             return GoapActionResult.Failed;
-
-        if (_steeringQuery.TryComp(ent, out var steering) && steering.Status == SteeringStatus.NoPath)
-        {
-            CreateDump("target unreachable: no path");
-            return GoapActionResult.Failed;
-        }
 
         if (!_xformQuery.TryComp(target, out var targetXform))
         {
@@ -341,11 +313,18 @@ public sealed partial class GunActionSystem : GoapActionSystem<Gun>
             // Re-arm the shoot delay so returning into LOS requires "re-aiming".
             Set(ent, Gun.ShootReadyAtKey, _timing.CurTime + TimeSpan.FromSeconds(action.ShootDelay));
 
-            if (steering != null)
-                steering.ForceMove = true;
+            if (action.RequireLos)
+                return GoapActionResult.Failed;
 
-            return action.RequireLos ? GoapActionResult.Failed : GoapActionResult.Continuing;
+            // The target is lost from sight, the agent goes after it until it is seen again.
+            return _moveTo.Move(ent, this, target, GoapState.MeleeRange, true) == GoapActionResult.Failed
+                ? GoapActionResult.Failed
+                : GoapActionResult.Continuing;
         }
+
+        // The target is in sight, the agent need not go after it.
+        if (_moveTo.IsMoving(ent))
+            _moveTo.Stop(ent);
 
         if (_timing.CurTime < Get(state, Gun.ShootReadyAtKey))
             return GoapActionResult.Continuing;
@@ -452,21 +431,6 @@ public sealed partial class GunActionSystem : GoapActionSystem<Gun>
         // Else, going to the magazine
         Set(ent, Gun.MovingToMagazineKey, true);
         Set(ent, Gun.NearbyMagazineKey, ammoUid.Value);
-
-        if (_jukeQuery.TryComp(ent, out var juke))
-        {
-            Set(ent, Gun.PreviousJukeTypeKey, juke.JukeType);
-            RemComp(ent, juke);
-        }
-
-        if (!_moveTo.StartupMovement(
-                ent,
-                this,
-                Transform(ammoUid.Value).Coordinates,
-                true,
-                Gun.PathfindKey,
-                GoapState.InteractRange))
-            return GoapActionResult.Failed;
 
         return GoapActionResult.Continuing;
     }

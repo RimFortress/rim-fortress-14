@@ -6,9 +6,8 @@
     - Buckled == false
     - Pulled == false
     actions:
-    - !type:EntityCoords
-      targetKey: Target
     - !type:MoveTo
+      targetEntityKey: Target
       rangeKey: InteractRange
     - !type:Storage
       targetKey: Target

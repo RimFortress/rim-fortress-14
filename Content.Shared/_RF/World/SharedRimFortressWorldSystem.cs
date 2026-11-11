@@ -1,8 +1,10 @@
+using Content.Shared._RF.MathHelpers;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Shared._RF.CCVar;
 using Content.Shared._RF.GameTicking.Rules;
 using Content.Shared._RF.World.Components;
+using Content.Shared._RF.World.Settlements;
 using Content.Shared.GameTicking;
 using Content.Shared.Light.Components;
 using Content.Shared.Maps;
@@ -11,37 +13,34 @@ using Content.Shared.Pinpointer;
 using Content.Shared.Preferences;
 using Content.Shared.Roles;
 using Robust.Shared.Configuration;
-using Robust.Shared.Map;
 using Robust.Shared.Network;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
-using Robust.Shared.Serialization;
 using Robust.Shared.Timing;
 
 namespace Content.Shared._RF.World;
 
 public abstract partial class SharedRimFortressWorldSystem : EntitySystem
 {
-    [Dependency] private SharedMapSystem _map = default!;
-    [Dependency] private IRobustRandom _random = default!;
-    [Dependency] protected TurfSystem Turf = default!;
-    [Dependency] private SharedTransformSystem _transform = default!;
-    [Dependency] private IConfigurationManager _cvar = default!;
-    [Dependency] private SharedBiomeSystem _biome = default!;
-    [Dependency] private INetManager _net = default!;
-    [Dependency] private IGameTiming _timing = default!;
-    [Dependency] private SharedGameTicker _ticker = default!;
+    [Dependency] private IRobustRandom _random = null!;
+    [Dependency] private IConfigurationManager _cvar = null!;
+    [Dependency] private INetManager _net = null!;
+    [Dependency] private IGameTiming _timing = null!;
+    [Dependency] protected TurfSystem Turf = null!;
+    [Dependency] protected SharedSettlementSystem Settlements = null!;
+    [Dependency] private SharedMapSystem _map = null!;
+    [Dependency] private SharedTransformSystem _transform = null!;
+    [Dependency] private SharedBiomeSystem _biome = null!;
+    [Dependency] private SharedGameTicker _ticker = null!;
 
     protected RimFortressRuleComponent? Rule;
 
     protected const byte ChunkSize = SharedBiomeSystem.ChunkSize;
 
     [Dependency] protected EntityQuery<RimFortressPlayerComponent> PlayerQuery;
-    [Dependency] private EntityQuery<TransformComponent> _xformQuery;
 
-    private int _maxSettlementRadius = 100;
-    private int _minSettlementMembers = 2;
     private int _playerSafeRadius = 100;
+    private MinMaxFloat SafeRadius => new(_playerSafeRadius, _playerSafeRadius);
     protected int SpawnAreaRadius = 20;
     protected int MinSpawnAreaTiles = 100;
 
@@ -49,8 +48,6 @@ public abstract partial class SharedRimFortressWorldSystem : EntitySystem
     {
         base.Initialize();
 
-        Subs.CVar(_cvar, RfVars.MaxSettlementRadius, value => _maxSettlementRadius = value, true);
-        Subs.CVar(_cvar, RfVars.MinSettlementMembers, value => _minSettlementMembers = value, true);
         Subs.CVar(_cvar, RfVars.PlayerSafeRadius, value => _playerSafeRadius = value, true);
         Subs.CVar(_cvar, RfVars.SpawnAreaRadius, value => SpawnAreaRadius = value, true);
         Subs.CVar(_cvar, RfVars.MinSpawnAreaTiles, value => MinSpawnAreaTiles = value, true);
@@ -107,13 +104,9 @@ public abstract partial class SharedRimFortressWorldSystem : EntitySystem
 
     public ProtoId<JobPrototype>? PickPopJob(IReadOnlyDictionary<ProtoId<JobPrototype>, JobPriority> jobPriorities)
     {
-        if (TryPick(JobPriority.High, out var picked))
-            return picked;
-
-        if (TryPick(JobPriority.Medium, out picked))
-            return picked;
-
-        if (TryPick(JobPriority.Low, out picked))
+        if (TryPick(JobPriority.High, out var picked)
+            || TryPick(JobPriority.Medium, out picked)
+            || TryPick(JobPriority.Low, out picked))
             return picked;
 
         return null;
@@ -225,12 +218,3 @@ public abstract partial class SharedRimFortressWorldSystem : EntitySystem
         return false;
     }
 }
-
-[Serializable, NetSerializable]
-public sealed class SettlementCoordinatesMessage(Dictionary<NetEntity, List<NetCoordinates>> coords) : EntityEventArgs
-{
-    public Dictionary<NetEntity, List<NetCoordinates>> Coords = coords;
-}
-
-[Serializable, NetSerializable]
-public sealed class WorldDebugInfoRequest : EntityEventArgs;

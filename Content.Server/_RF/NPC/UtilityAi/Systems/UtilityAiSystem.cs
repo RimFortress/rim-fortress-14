@@ -2,6 +2,7 @@ using System.Linq;
 using Content.Server._RF.NPC.Systems;
 using Content.Server.Administration.Managers;
 using Content.Shared._RF.NPC.Executable.Prototypes;
+using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.UtilityAi;
 using Content.Shared._RF.NPC.UtilityAi.Components;
@@ -227,14 +228,30 @@ public sealed partial class UtilityAiSystem : SharedUtilityAiSystem
             ent.Comp.Cooldowns.Remove(goal);
         }
 
-        if (ent.Comp.NextCheck > Timing.CurTime)
+        // The goal that was put aside for another one is gone back to, no matter what is better meanwhile: the other one is
+        // a part of it.
+        if (ent.Comp.NextCheck > Timing.CurTime || ent.Comp.SuspendedGoal != null)
             return;
 
         ent.Comp.NextCheck = Timing.CurTime + ent.Comp.BetterGoalCheckRate;
 
+        // Nothing is better than the best score there can be: a goal that has it is pursued until it is over, and it is not swapped for
+        // another goal that has it too, whichever of them is found first.
+        if (ent.Comp.CurrentGoal is { } current
+            && ConditionsMet(ent.Owner, current)
+            && GetScore(ent.AsNullable(), current) >= 1f)
+            return;
+
         if (!TryGetGoal(ent.AsNullable(), out var newGoal)
             || ent.Comp.CurrentGoal == newGoal)
             return;
+
+        // A better goal is not waited for until the plan of the current one is over: the plan is given up, the goal is
+        // finished as interrupted, and the actions clean up after themselves. The incumbent bonus is what keeps the agent from
+        // changing its mind over a small difference. It is done first, so what the old goal leaves behind is taken from
+        // the old goal and not from the new one.
+        if (TryComp(ent, out GoapComponent? goap) && goap.Plan != null)
+            Goap.PlanShutdown((ent.Owner, goap), GoapPlanFinishReason.Interrupted);
 
         SetGoal(ent.Owner, newGoal.Value);
     }

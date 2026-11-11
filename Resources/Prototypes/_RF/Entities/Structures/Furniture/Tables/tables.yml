@@ -1,0 +1,5 @@
+- type: !PartialOnly entity
+  id: TableReinforced
+  components:
+  - type: PathTags
+    tags: [Climbable]

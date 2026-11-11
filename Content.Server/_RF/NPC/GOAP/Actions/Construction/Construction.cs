@@ -6,7 +6,6 @@ using Content.Server.Construction;
 using Content.Server.Construction.Components;
 using Content.Server.Construction.Conditions;
 using Content.Server.Interaction;
-using Content.Server.NPC.Pathfinding;
 using Content.Server.Tools;
 using Content.Shared._RF.Construction;
 using Content.Shared._RF.NPC.GOAP;
@@ -37,12 +36,6 @@ public sealed partial class Construction : BaseGoapAction<Construction>
     /// </summary>
     [DataField(required: true)]
     public StateKey<EntityUid> TargetKey;
-
-    /// <summary>
-    /// Where the pathfinding result will be stored (if applicable). This gets removed after execution.
-    /// </summary>
-    [DataField]
-    public StateKey<PathResultEvent> PathfindKey = "MovementPathfinding";
 
     /// <summary>
     /// How close we need to get before considering movement finished.
@@ -99,7 +92,7 @@ public sealed partial class NpcConstructionSystem : GoapActionSystem<Constructio
         Remove(ent, action.CurrentDoAfter);
         Remove(ent, action.CurrentItemKey);
         NpcTimingSystem.ClearQueue(ent);
-        _moveTo.ShutdownMovement(ent, this, action.PathfindKey);
+        _moveTo.Stop(ent);
     }
 
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, Construction action)
@@ -161,19 +154,13 @@ public sealed partial class NpcConstructionSystem : GoapActionSystem<Constructio
             // Movement
             if (distance > range)
             {
-                if (!_moveTo.StartedUp(ent))
-                {
-                    CreateDump($"started moving toward the item: {ToPrettyString(item)}");
-                    _moveTo.StartupMovement(ent, this, itemCoords, true, action.PathfindKey, action.RangeKey);
-                }
-
-                var result = _moveTo.UpdateMovement(ent, this, itemCoords, action.PathfindKey, action.RangeKey);
+                var result = _moveTo.Move(ent, this, item, action.RangeKey);
 
                 if (result != GoapActionResult.Finished)
                     return result;
             }
-            else if (_moveTo.StartedUp(ent))
-                _moveTo.ShutdownMovement(ent, this, action.PathfindKey);
+            else if (_moveTo.IsMoving(ent))
+                _moveTo.Stop(ent);
 
             return _npcTiming.EnqueueWait(ent,
                 this,
@@ -200,19 +187,13 @@ public sealed partial class NpcConstructionSystem : GoapActionSystem<Constructio
         if (ownerCoords.TryDistance(EntityManager, targetCoords, out distance)
             && distance > Get(ent.Comp.State, GoapState.InteractRange))
         {
-            if (!_moveTo.StartedUp(ent))
-            {
-                CreateDump($"started moving toward the target: {ToPrettyString(target)}");
-                _moveTo.StartupMovement(ent, this, targetCoords, true, action.PathfindKey, action.RangeKey);
-            }
-
-            var result = _moveTo.UpdateMovement(ent, this, targetCoords, action.PathfindKey, action.RangeKey);
+            var result = _moveTo.Move(ent, this, target, action.RangeKey);
 
             if (result != GoapActionResult.Finished)
                 return result;
         }
-        else if (_moveTo.StartedUp(ent))
-            _moveTo.ShutdownMovement(ent, this, action.PathfindKey);
+        else if (_moveTo.IsMoving(ent))
+            _moveTo.Stop(ent);
 
         return _npcTiming.EnqueueWait(ent,
             this,

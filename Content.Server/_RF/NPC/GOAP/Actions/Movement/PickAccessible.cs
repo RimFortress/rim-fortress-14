@@ -1,11 +1,13 @@
-using System.Linq;
-using System.Threading.Tasks;
-using Content.Server.NPC.Pathfinding;
+using Content.Server._RF.NPC.Pathfinding;
+using Content.Server._RF.NPC.Pathfinding.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Systems;
+using Content.Shared._RF.NPC.Pathfinding;
+using Content.Shared._RF.NPC.Pathfinding.Components;
+using Content.Shared._RF.NPC.Pathfinding.Prototypes;
 using Robust.Shared.Map;
-using Robust.Shared.Timing;
+using Robust.Shared.Prototypes;
 
 namespace Content.Server._RF.NPC.GOAP.Actions.Movement;
 
@@ -21,18 +23,26 @@ public sealed partial class PickAccessible : BaseGoapAction<PickAccessible>
     public StateKey<EntityCoordinates> TargetCoordinates = "TargetCoordinates";
 
     /// <summary>
-    /// Where the pathfinding result will be stored (if applicable). This gets removed after execution.
+    /// What the place is searched for with: the algorithm of the query chooses it, and the rules of the profiles of the
+    /// agent decide which places it can get to, so the same action does for the agents that can go by lava and for the
+    /// ones that cannot.
     /// </summary>
     [DataField]
-    public StateKey<PathResultEvent> PathfindKey = "MovementPathfinding";
+    public ProtoId<PathQueryPrototype> Query = "Wander";
+
+    /// <summary>
+    /// What the place is kept away from: the more of them are near a place, the worse it is for the query.
+    /// </summary>
+    [DataField]
+    public PathAvoidSpec? Avoid;
 }
 
 public sealed partial class PickAccessibleSystem : GoapActionSystem<PickAccessible>
 {
-    [Dependency] private IGameTiming _timing = default!;
-    [Dependency] private PathfindingSystem _pathfinding = default!;
+    [Dependency] private RfPathfindingSystem _pathfinding = null!;
+    [Dependency] private EntityQuery<PathProfilesComponent> _profilesQuery;
 
-    private readonly Dictionary<EntityUid, Task<PathResultEvent>> _pendingPaths = new();
+    private const float DefaultRange = 7f;
 
     protected override float ActionCost(Entity<GoapComponent> ent, GoapState state, PickAccessible action) => 2f;
 
@@ -41,50 +51,49 @@ public sealed partial class PickAccessibleSystem : GoapActionSystem<PickAccessib
         TryGet(ent, action.RangeKey, out var maxRange);
 
         if (maxRange == 0f)
-            maxRange = 7f;
+            maxRange = DefaultRange;
 
-        _pendingPaths[ent] = _pathfinding.GetRandomPath(
-            ent,
-            maxRange,
-            default,
-            flags: _pathfinding.GetFlags(ent.Comp.State));
+        if (!_profilesQuery.TryComp(ent, out var profiles))
+        {
+            ComponentNotFound<PathProfilesComponent>();
+            return false;
+        }
 
-        CreateDump($"random path search started at {_timing.CurTime}. MaxRange: {maxRange}");
+        if (!_pathfinding.RequestPath(new(ent, profiles, ent.Comp), action.Query, null, maxRange, avoid: _pathfinding.GetAvoid(ent, action.Avoid)))
+        {
+            CreateDump("none of the profiles of the agent can choose a place");
+            return false;
+        }
+
+        CreateDump($"search for a place started. MaxRange: {maxRange}");
         return true;
     }
 
     protected override GoapActionResult ActionUpdate(Entity<GoapComponent> ent, PickAccessible action)
     {
-        if (!_pendingPaths.TryGetValue(ent, out var task))
-        {
-            CreateDump($"pathfinding task not found");
+        if (!_profilesQuery.TryComp(ent, out var profiles))
             return GoapActionResult.Failed;
-        }
 
-        // Waiting for the asynchronous path search to complete.
-        if (!task.IsCompleted)
+        // Waiting for the search to complete.
+        if (!_pathfinding.TryGetResult((ent, profiles, ent.Comp), out var result, out _))
             return GoapActionResult.Continuing;
 
-        _pendingPaths.Remove(ent);
+        _pathfinding.CancelPath((ent.Owner, profiles));
 
-        if (!task.IsCompletedSuccessfully)
+        if (result.Status == PathSearchStatus.NoPath || result.Path.Count == 0)
         {
-            CreateDump("background async pathfinding failed");
+            CreateDump("no place found");
             return GoapActionResult.Failed;
         }
 
-        var path = task.GetAwaiter().GetResult();
-        CreateDump($"pathfinding finished at {_timing.CurTime}");
-
-        if (path.Result != PathResult.Path)
-        {
-            CreateDump($"pathfinding returned {path.Result}");
-            return GoapActionResult.Failed;
-        }
-
-        var target = path.Path.Last().Coordinates;
-        Set(ent, action.TargetCoordinates, target);
-        Set(ent, action.PathfindKey, path);
+        var node = result.Path[^1];
+        Set(ent, action.TargetCoordinates, new EntityCoordinates(node.Graph, node.Box.Center));
         return GoapActionResult.Finished;
+    }
+
+    protected override void ActionShutdown(Entity<GoapComponent> ent, PickAccessible action)
+    {
+        if (_profilesQuery.TryComp(ent, out var profiles))
+            _pathfinding.CancelPath((ent.Owner, profiles));
     }
 }

@@ -25,6 +25,11 @@
     effects:
       ActiveHandFree: true
 
+  # The hand is freed by putting what is in it away: a backpack, a pocket, or, if there is nowhere, the floor.
+  - action: !type:FreeHand
+    effects:
+      ActiveHandFree: true
+
   - action: !type:Drop
       costMultiplier: 2
     effects:

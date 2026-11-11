@@ -4,9 +4,8 @@
   - preconditions:
     - Query/HealingBuckleTarget != null
     actions:
-    - !type:EntityCoords
-      targetKey: &Target Query/HealingBuckleTarget
     - !type:MoveTo
+      targetEntityKey: &Target Query/HealingBuckleTarget
       rangeKey: InteractRange
     - !type:Pull
       targetKey: *Target
