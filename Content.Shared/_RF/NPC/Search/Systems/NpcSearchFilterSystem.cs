@@ -179,7 +179,7 @@ public abstract partial class NpcSearchFilterSystem<T> : EntitySystem where T : 
 /// </summary>
 /// <typeparam name="TFilter">Search filter type.</typeparam>
 /// <typeparam name="TKey">The key type on which the filter depends.</typeparam>
-public abstract class NpcSearchGoapKeyFilterSystem<TFilter, TKey> : NpcSearchFilterSystem<TFilter>
+public abstract partial class NpcSearchGoapKeyFilterSystem<TFilter, TKey> : NpcSearchFilterSystem<TFilter>
     where TFilter : BaseSearchFilter<TFilter>
     where TKey : notnull
 {

@@ -27,7 +27,7 @@ public sealed partial class CanDestroy : BasePathCondition<CanDestroy>
     public string Var = "destroyTime";
 }
 
-public sealed class CanDestroyPathConditionSystem : PathConditionSystem<CanDestroy>
+public sealed partial class CanDestroyPathConditionSystem : PathConditionSystem<CanDestroy>
 {
     [Dependency] private CombatStatsSystem _combat = null!;
 

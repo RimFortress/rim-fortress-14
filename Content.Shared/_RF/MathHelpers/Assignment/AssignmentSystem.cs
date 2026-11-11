@@ -7,12 +7,13 @@ using JetBrains.Annotations;
 namespace Content.Shared._RF.MathHelpers.Assignment;
 
 /// <summary>
-/// The distribution of entities between buckets (<see cref="Assignment"/>) where the weight of an entity and the cost of giving it to
-/// a bucket are what the curves say. It is for anything that is a set of entities shared out by the strength, the distance, the load:
+/// The distribution of entities between buckets (<see cref="Assignment"/>) where the weight
+/// of an entity and the cost of giving it to a bucket are what the curves say.
+/// It is for anything that is a set of entities shared out by the strength, the distance, the load:
 /// the targets between the squads of a raid, jobs between colonists, kits between raiders, seats between guests.
 /// What the buckets are, and what to do with the result, is up to the one who uses it.
 /// </summary>
-public sealed class AssignmentSystem : EntitySystem
+public sealed partial class AssignmentSystem : EntitySystem
 {
     [Dependency] private EntityScoringSystem _scoring = null!;
     [Dependency] private MathCurvesSystem _curves = null!;
@@ -45,34 +46,40 @@ public sealed class AssignmentSystem : EntitySystem
         EntityUid? source = null,
         bool skipWeightless = false)
     {
-        var weighted = _scoring.Score(items, weight, conditions, variables, positiveOnly: skipWeightless, source: source)
+        var weighted = _scoring
+            .Score(items, weight, conditions, variables, positiveOnly: skipWeightless, source: source)
             .Select(x => (x.Uid, x.Score));
         var costCurves = cost as IReadOnlyCollection<MathCurve.MathCurve> ?? cost.ToList();
 
-        return Assignment.Assign(weighted, buckets, (item, itemWeight, bucket) =>
-        {
-            var costVariables = new Dictionary<string, float>(variables ?? new())
+        return Assignment.Assign(weighted,
+            buckets,
+            (item, itemWeight, bucket) =>
             {
-                ["weight"] = itemWeight,
-                ["load"] = bucket.Load,
-                ["capacity"] = bucket.Capacity,
-                ["count"] = bucket.Count,
-            };
+                var costVariables = new Dictionary<string, float>(variables ?? new())
+                {
+                    ["weight"] = itemWeight,
+                    ["load"] = bucket.Load,
+                    ["capacity"] = bucket.Capacity,
+                    ["count"] = bucket.Count,
+                };
 
-            foreach (var (key, value) in bucket.Variables)
-            {
-                costVariables[key] = value;
-            }
+                foreach (var (key, value) in bucket.Variables)
+                {
+                    costVariables[key] = value;
+                }
 
-            if (bucket.Position is { } position)
-                costVariables["distance"] = Vector2.Distance(position, _transform.GetWorldPosition(item));
+                if (bucket.Position is { } position)
+                    costVariables["distance"] = Vector2.Distance(position, _transform.GetWorldPosition(item));
 
-            return _curves.Get(costCurves, 0f, item, costVariables);
-        }, current == null ? null : (EntityUid item, out EntityUid key) =>
-        {
-            var found = current(item);
-            key = found ?? default;
-            return found != null;
-        });
+                return _curves.Get(costCurves, 0f, item, costVariables);
+            },
+            current == null
+                ? null
+                : (EntityUid item, out EntityUid key) =>
+                {
+                    var found = current(item);
+                    key = found ?? default;
+                    return found != null;
+                });
     }
 }

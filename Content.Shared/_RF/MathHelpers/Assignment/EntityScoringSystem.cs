@@ -1,5 +1,4 @@
 using System.Linq;
-using Content.Shared._RF.MathHelpers.MathCurve;
 using Content.Shared._RF.MathHelpers.MathCurve.Systems;
 using Content.Shared.EntityConditions;
 using JetBrains.Annotations;
@@ -34,7 +33,7 @@ public enum EntityAggregate
 /// conditions are not counted. It is the part of the "for each entity" that the effects of the groups, the distribution
 /// (<see cref="AssignmentSystem"/>) and the curves have in common.
 /// </summary>
-public sealed class EntityScoringSystem : EntitySystem
+public sealed partial class EntityScoringSystem : EntitySystem
 {
     [Dependency] private MathCurvesSystem _curves = null!;
     [Dependency] private SharedEntityConditionsSystem _conditions = null!;

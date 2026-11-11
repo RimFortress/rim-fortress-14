@@ -27,13 +27,8 @@ namespace Content.Shared._RF.Combat;
 /// spare magazines), which is what it is able to do if it takes the time. The numbers are made of the lists by the functions here.
 /// </para>
 /// </summary>
-public sealed class CombatStatsSystem : EntitySystem
+public sealed partial class CombatStatsSystem : EntitySystem
 {
-    /// <summary>
-    /// How far a firearm shoots, in tiles. The firearms do not have a range of their own, a projectile flies until it hits something.
-    /// </summary>
-    public const float RangedRange = 12f;
-
     [Dependency] private SharedMeleeWeaponSystem _melee = null!;
     [Dependency] private SharedHandsSystem _hands = null!;
     [Dependency] private ItemSlotsSystem _slots = null!;
@@ -52,6 +47,11 @@ public sealed class CombatStatsSystem : EntitySystem
     private static readonly ProtoId<SearchQueryPrototype> MeleesQuery = "PathMelees";
     private static readonly ProtoId<SearchQueryPrototype> GunsQuery = "PathGuns";
     private static readonly ProtoId<SearchQueryPrototype> MagazinesQuery = "PathMagazines";
+
+    /// <summary>
+    /// How far a firearm shoots, in tiles. The firearms do not have a range of their own, a projectile flies until it hits something.
+    /// </summary>
+    public const float RangedRange = 12f;
 
     // A buffer that is reused by the calculations.
     private readonly List<(float Progress, float PerSecond, int Count)> _plan = new();
