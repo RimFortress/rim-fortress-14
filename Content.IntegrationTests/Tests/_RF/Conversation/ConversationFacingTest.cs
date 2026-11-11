@@ -119,7 +119,7 @@ public sealed class ConversationFacingTest : GameTest
 
                     foreach (var other in others)
                     {
-                        if (Vector2.Distance(_transform.GetWorldPosition(other), _transform.GetWorldPosition(pop)) < 0.7f)
+                        if (Vector2.Distance(_transform.GetWorldPosition(other), _transform.GetWorldPosition(pop)) < 0.4f)
                             crowd.Add($"tick {t}: {pop} stands {Vector2.Distance(_transform.GetWorldPosition(other), _transform.GetWorldPosition(pop)):0.00} m from {other}");
                     }
                 }

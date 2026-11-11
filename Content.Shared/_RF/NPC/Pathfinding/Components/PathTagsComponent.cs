@@ -14,8 +14,9 @@ namespace Content.Shared._RF.NPC.Pathfinding.Components;
 public sealed partial class PathTagsComponent : Component
 {
     /// <summary>
-    /// Tags that are always assigned to the entity.
+    /// Tags that are always assigned to the entity. They are only read from the prototype: the ones that the systems add
+    /// and take away while the game goes (like the kind of a door) are not saved, the systems give them again on startup.
     /// </summary>
-    [DataField]
+    [DataField(readOnly: true)]
     public HashSet<ProtoId<PathTagPrototype>> Tags = new();
 }
