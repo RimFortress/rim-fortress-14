@@ -19,6 +19,7 @@ using Content.Shared._RF.NPC.Engagement.Components;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.Phases;
+using Content.Shared._RF.Skills;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.Search.Systems;
 using Content.Shared._RF.NPC.Systems;
@@ -54,6 +55,12 @@ public sealed class RaidRuleTest : GameTest
     private const string RimFortressFaction = "RimFortress";
     private static readonly ProtoId<DamageTypePrototype> BluntType = "Blunt";
 
+    /// <summary>
+    /// The melee skill that the raiders are given. It is the difficulty of the spear they carry, so the blow and the rate of the
+    /// weapon are what they are, and the strength of the raid does not depend on the dice that gave the raiders their skills.
+    /// </summary>
+    private const int RaiderMeleeLevel = 8;
+
     [TestPrototypes]
     private const string Prototypes = @"
 # A wall that cannot be destroyed, so the doors are the only way.
@@ -81,6 +88,7 @@ public sealed class RaidRuleTest : GameTest
     [SidedDependency(Side.Server)] private readonly SharedTransformSystem _transform = default!;
     [SidedDependency(Side.Server)] private readonly SharedMapSystem _maps = default!;
     [SidedDependency(Side.Server)] private readonly SharedGoapSystem _goap = default!;
+    [SidedDependency(Side.Server)] private readonly SharedSkillsSystem _skills = default!;
     [SidedDependency(Side.Server)] private readonly SharedNpcSearcherSystem _searcher = default!;
     [SidedDependency(Side.Server)] private readonly NpcFactionSystem _faction = default!;
 
@@ -137,7 +145,9 @@ public sealed class RaidRuleTest : GameTest
 
             for (var i = 0; i < raiders; i++)
             {
-                _raiders.Add(_entMan.SpawnEntity("Raider", At(30 + i, 30)));
+                var raider = _entMan.SpawnEntity("Raider", At(30 + i, 30));
+                _skills.SetSkillLevel(raider, "Melee", RaiderMeleeLevel);
+                _raiders.Add(raider);
             }
         });
     }
