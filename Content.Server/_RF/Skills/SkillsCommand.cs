@@ -23,9 +23,9 @@ namespace Content.Server._RF.Skills;
 /// </code>
 /// </example>
 [ToolshedCommand, AdminCommand(AdminFlags.Debug)]
-public sealed class SkillsCommand : SystemCommand<SkillsSystem>
+public sealed partial class SkillsCommand : SystemCommand<SkillsSystem>
 {
-    [Dependency] private IPrototypeManager _proto = default!;
+    [Dependency] private IPrototypeManager _proto = null!;
 
     [CommandImplementation("add_exp")]
     public IEnumerable<EntityUid> AddExp(
