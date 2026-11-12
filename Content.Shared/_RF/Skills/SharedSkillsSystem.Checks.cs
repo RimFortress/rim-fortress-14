@@ -372,13 +372,32 @@ public abstract partial class SharedSkillsSystem
 
     private void GiveExperience(EntityUid user, ResolvedSkillCheck resolved, SkillCheckResult result)
     {
-        if (!resolved.Check.Experience.TryGetValue(result, out var curves))
-            return;
+        if (TryGetExperience(user, resolved, result, out _, out var experience))
+            AddExperience(user, resolved.Skill, experience);
+    }
 
-        var experience = _mathCurves.Get(curves, 0f, user, resolved.Variables);
+    /// <summary>
+    /// Counts the experience that the user gets for the result of the check.
+    /// </summary>
+    /// <param name="raw">The result of the formula of the check.</param>
+    /// <param name="final">The experience with the modifiers of all the participants of the check.</param>
+    private bool TryGetExperience(
+        EntityUid user,
+        ResolvedSkillCheck resolved,
+        SkillCheckResult result,
+        out float raw,
+        out int final)
+    {
+        raw = 0f;
+        final = 0;
+
+        if (!resolved.Check.Experience.TryGetValue(result, out var curves))
+            return false;
+
+        raw = _mathCurves.Get(curves, 0f, user, resolved.Variables);
 
         // Query all participants in the interaction to get the final experience modifiers
-        var ev = new GetSkillExpModifierEvent(resolved.Used ?? user, resolved.Skill, (int) experience, 1f);
+        var ev = new GetSkillExpModifierEvent(resolved.Used ?? user, resolved.Skill, (int) raw, 1f);
 
         RaiseLocalEvent(user, ref ev);
 
@@ -391,7 +410,8 @@ public abstract partial class SharedSkillsSystem
                 RaiseLocalEvent(target, ref ev);
         }
 
-        AddExperience(user, resolved.Skill, (int) (ev.Modificator * ev.Multiplier));
+        final = (int) (ev.Modificator * ev.Multiplier);
+        return true;
     }
 
     private void ApplyEffects(EntityUid user, ResolvedSkillCheck resolved, SkillCheckResult result)
