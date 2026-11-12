@@ -1,9 +1,8 @@
 using Content.Client._RF.UserInterface.Controls;
 using Content.Shared._RF.CCVar;
-using Content.Shared._RF.Skills;
 using Content.Shared._RF.Skills.Components;
+using Content.Shared._RF.Skills.Prototypes;
 using Content.Shared.Preferences;
-using Robust.Client.UserInterface;
 using Robust.Shared.Configuration;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;

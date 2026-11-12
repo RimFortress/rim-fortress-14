@@ -24,6 +24,7 @@
   abstract: true
   group: Pie
   craftingTime: 75
+  difficulty: 5
   skillsUp:
   - skill: Cooking
     exp: 30

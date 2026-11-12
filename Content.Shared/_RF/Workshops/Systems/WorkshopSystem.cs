@@ -3,6 +3,7 @@ using Content.Shared._RF.NPC.Search;
 using Content.Shared._RF.NPC.Search.Systems;
 using Content.Shared._RF.NPC.Systems;
 using Content.Shared._RF.Skills;
+using Content.Shared._RF.Skills.Prototypes;
 using Content.Shared._RF.Stockpile.Components;
 using Content.Shared._RF.Stockpile.Systems;
 using Content.Shared._RF.Workshops.Components;
@@ -44,6 +45,13 @@ public sealed partial class WorkshopSystem : EntitySystem
     [Dependency] private SharedNpcSearcherSystem _searcher = null!;
 
     [Dependency] private EntityQuery<StackComponent> _stackQuery;
+
+    private static readonly ProtoId<SkillQueryPrototype> CraftQuery = "Craft";
+
+    /// <summary>
+    /// The variable of the formulas of the crafting skill check that is the difficulty of the recipe.
+    /// </summary>
+    public const string RecipeDifficultyVariable = "recipeDifficulty";
 
     public override void Initialize()
     {
@@ -222,7 +230,7 @@ public sealed partial class WorkshopSystem : EntitySystem
 
         DeleteIngredients(ent.Comp, proto);
 
-        if (_skills.DoInteractionCheck(ent.Owner, user.Value) != SkillCheckResult.Fail)
+        if (!_skills.DoCheck(CraftQuery, user.Value, ent.Owner, variables: GetCraftVariables(proto)).IsFail)
         {
             SpawnResult(workshop, proto.Result);
             ent.Comp.CraftingDoAfter = null;

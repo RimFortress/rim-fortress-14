@@ -1,0 +1,43 @@
+# Result: the spread of a shot, which is wider by 5% for each level below the difficulty of the gun and narrower by as
+# much for each level above, between a fifth and the double of what it is.
+- type: skillCheck
+  id: GunShot
+  parent: BaseSkillCheck
+  difficulty:
+  - var: usedDifficulty
+  result:
+  - mul:
+    - var: delta
+    - mul: [float: -0.05]
+    - add: [float: 1]
+    - clamp:
+        min: 0.2
+        max: 2
+  experience:
+    Fail:
+    - var: difficulty
+    - mul: [float: 1.5]
+    Success:
+    - var: difficulty
+    - mul: [float: 3]
+    AdditionalSuccess:
+    - var: difficulty
+    - mul: [float: 6]
+
+# A skilled shooter stows the old magazine in their inventory instead of throwing it away, which is the additional
+# success, see GunActionSystem. The difficulty is the one of the gun.
+- type: skillCheck
+  id: GunReload
+  parent: BaseSkillCheck
+  difficulty:
+  - var: usedDifficulty
+  experience:
+    Fail:
+    - var: difficulty
+    - mul: [float: 0.5]
+    Success:
+    - var: difficulty
+    - mul: [float: 1]
+    AdditionalSuccess:
+    - var: difficulty
+    - mul: [float: 2]

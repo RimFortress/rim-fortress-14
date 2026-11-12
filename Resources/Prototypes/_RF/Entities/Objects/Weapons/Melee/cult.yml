@@ -1,0 +1,8 @@
+- type: !PartialOnly entity
+  id: RitualDagger
+  components:
+  - type: StockpileCategory
+    category: Melee
+  - type: SkillDifficulty
+    difficulty:
+      MeleeAttack: 10

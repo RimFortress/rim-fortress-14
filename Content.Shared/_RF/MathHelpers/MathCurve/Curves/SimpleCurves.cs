@@ -178,7 +178,8 @@ public sealed partial class Variable : MathCurve
     [DataField(required: true)]
     public string Var = string.Empty;
 
-    public override float Curve(float value, IMathCurveHandler handler, MathCurveContext ctx) => ctx.Variables[Var];
+    public override float Curve(float value, IMathCurveHandler handler, MathCurveContext ctx)
+        => ctx.Variables.GetValueOrDefault(Var);
 }
 
 /// <summary>

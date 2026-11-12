@@ -15,11 +15,3 @@
   - type: Item
     size: Small
     sprite: Objects/Weapons/Melee/gohei.rsi
-  # RimFortress Start
-  - type: StockpileCategory
-    category: Melee
-  - type: SkillInteraction
-    skill: Melee
-    targetLevel: 3
-    experience: 15
-  # RimFortress End

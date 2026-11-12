@@ -2,6 +2,7 @@
   id: BaseKitchenRecipe
   abstract: true
   craftingTime: 30
+  difficulty: 3
   skillsUp:
   - skill: Cooking
     exp: 20

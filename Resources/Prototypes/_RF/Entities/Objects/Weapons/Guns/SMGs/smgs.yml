@@ -1,0 +1,9 @@
+- type: !PartialOnly entity
+  id: BaseWeaponSubMachineGun
+  components:
+  - type: StockpileCategory
+    category: Gun
+  - type: SkillDifficulty
+    difficulty:
+      ShootGun: 10
+      ReloadGun: 6

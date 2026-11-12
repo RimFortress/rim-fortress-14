@@ -1,4 +1,3 @@
-using Content.Suil;
 using Content.Client._RF.UserInterface.Controls;
 using Content.Client.Humanoid;
 using Content.Client.Lobby;
@@ -9,7 +8,6 @@ using Content.Shared.Humanoid.Markings;
 using Content.Shared.Preferences;
 using Robust.Client.Player;
 using Robust.Client.UserInterface;
-using Robust.Client.UserInterface.Controls;
 using Robust.Client.Utility;
 using Robust.Shared.Configuration;
 using Robust.Shared.ContentPack;

@@ -1,0 +1,8 @@
+- type: !PartialOnly entity
+  id: BaseCrowbar
+  components:
+  - type: StockpileCategory
+    category: Tool
+  - type: SkillDifficulty
+    difficulty:
+      UseTool: 3

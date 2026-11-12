@@ -35,6 +35,7 @@
   abstract: true
   parent: BaseKitchenRecipe
   group: Breads
+  difficulty: 2
 
 - type: workshopRecipe
   id: RecipeBun

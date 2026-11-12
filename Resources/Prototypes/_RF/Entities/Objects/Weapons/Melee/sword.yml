@@ -1,0 +1,19 @@
+- type: !PartialOnly entity
+  id: BaseSword
+  components:
+  - type: StockpileCategory
+    category: Melee
+  - type: Tag
+    tags:
+    - Sword
+  - type: SkillDifficulty
+    difficulty:
+      MeleeAttack: 8
+
+- type: !PartialOnly entity
+  id: CaptainSabre
+  components:
+  - type: Tag
+    tags:
+    - CaptainSabre
+    - Sword

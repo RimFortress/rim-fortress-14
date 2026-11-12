@@ -1,0 +1,30 @@
+# The schemes of the skill checks, see SkillCheckPrototype. Which skill performs which check for which query is up
+# to the skills (the "checks" of a skill, skills.yml), and how hard it is, to the entities that take part in the
+# interaction (SkillDifficulty). The conditions of a check (used, target) tell which ones it is for: of all the
+# checks that fit, the one with the highest priority is performed.
+#
+# The formulas have these variables: level, maxLevel, usedDifficulty, targetDifficulty, userDifficulty, and (all but
+# the difficulty formula) difficulty and delta = level - difficulty. The result of the formulas is clamped by
+# hand, clamp has to have both the min and the max.
+#
+# The experience is a formula of the difficulty, as it is: the harder the more.
+
+# The chances of the additional success and of the failure that every check has: 20% each at the level of
+# the difficulty, and 3% more of the one and less of the other for each level above.
+- type: skillCheck
+  id: BaseSkillCheck
+  abstract: true
+  successChance:
+  - var: delta
+  - mul: [float: 0.03]
+  - add: [float: 0.2]
+  - clamp:
+      min: 0
+      max: 1
+  failChance:
+  - var: delta
+  - mul: [float: -0.03]
+  - add: [float: 0.2]
+  - clamp:
+      min: 0
+      max: 1

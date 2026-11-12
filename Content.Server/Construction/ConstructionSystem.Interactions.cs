@@ -1,9 +1,7 @@
 using System.Linq;
-using Content.Server._RF.Skills; // RimFortress
 using Content.Server.Administration.Logs;
 using Content.Server.Construction.Components;
 using Content.Server.Temperature.Components;
-using Content.Shared._RF.Skills; // RimFortress
 using Content.Shared.Construction;
 using Content.Shared.Construction.Components;
 using Content.Shared.Construction.EntitySystems;
@@ -24,6 +22,12 @@ using Robust.Shared.Utility;
 using Robust.Shared.Exceptions;
 #endif
 
+// RimFortress Start
+using Content.Shared._RF.Skills;
+using Content.Shared._RF.Skills.Prototypes;
+using Robust.Shared.Prototypes;
+// RimFortress End
+
 namespace Content.Server.Construction
 {
     public sealed partial class ConstructionSystem
@@ -32,7 +36,9 @@ namespace Content.Server.Construction
 #if EXCEPTION_TOLERANCE
         [Dependency] private IRuntimeLog _runtimeLog = default!;
 #endif
-        [Dependency] private SkillsSystem _skills = default!; // RimFortress
+        [Dependency] private SharedSkillsSystem _skills = default!; // RimFortress
+
+        private static readonly ProtoId<SkillQueryPrototype> ConstructQuery = "Construct"; // RimFortress
 
         private readonly Queue<EntityUid> _constructionUpdateQueue = new();
         private readonly HashSet<EntityUid> _queuedUpdates = new();
@@ -243,7 +249,7 @@ namespace Content.Server.Construction
                     return HandleResult.False;
 
                 // RimFortress Start
-                if (!validation && _skills.DoInteractionCheck(uid, interactDoAfter.User, interactDoAfter.Target) == SkillCheckResult.Fail)
+                if (!validation && _skills.DoCheck(ConstructQuery, interactDoAfter.User, interactDoAfter.Used, uid).IsFail)
                     return HandleResult.False;
                 // RimFortress End
 
@@ -306,7 +312,7 @@ namespace Content.Server.Construction
                             MovementThreshold = 1f, // RimFortress
                         };
 
-                        doAfterEventArgs.Delay = _skills.GetDelay(uid, interactUsing.User, doAfterEventArgs.Delay); // RimFortress
+                        doAfterEventArgs.Delay = _skills.GetDelay(ConstructQuery, interactUsing.User, interactUsing.Used, doAfterEventArgs.Delay, uid); // RimFortress
 
                         var started  = _doAfterSystem.TryStartDoAfter(doAfterEventArgs);
 
@@ -382,7 +388,7 @@ namespace Content.Server.Construction
                         interactUsing.Used,
                         interactUsing.User,
                         uid,
-                        TimeSpan.FromSeconds(_skills.GetDelay(uid, interactUsing.User, toolInsertStep.DoAfter)), // RimFortress
+                        TimeSpan.FromSeconds(_skills.GetDelay(ConstructQuery, interactUsing.User, interactUsing.Used, toolInsertStep.DoAfter, uid)), // RimFortress
                         new [] { toolInsertStep.Tool },
                         new ConstructionInteractDoAfterEvent(EntityManager, interactUsing),
                         out var doAfter,

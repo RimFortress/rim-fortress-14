@@ -1,8 +1,7 @@
 using Content.Client._RF.Skills;
 using Content.Client._RF.UserInterface.Controls;
-using Content.Shared._RF.Skills;
+using Content.Shared._RF.Skills.Prototypes;
 using Robust.Client.GameObjects;
-using Robust.Client.UserInterface;
 using Robust.Shared.Prototypes;
 
 namespace Content.Client._RF.Lobby.UI;

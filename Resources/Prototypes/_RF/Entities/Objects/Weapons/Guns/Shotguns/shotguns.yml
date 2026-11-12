@@ -1,0 +1,9 @@
+- type: !PartialOnly entity
+  id: BaseWeaponShotgun
+  components:
+  - type: StockpileCategory
+    category: Gun
+  - type: SkillDifficulty
+    difficulty:
+      ShootGun: 8
+      ReloadGun: 4

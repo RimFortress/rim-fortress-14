@@ -1,0 +1,7 @@
+- type: !PartialOnly entity
+  id: CaneBlade
+  components:
+  - type: Tag
+    tags:
+    - CaneBlade
+    - Sword

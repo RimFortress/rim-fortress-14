@@ -1,0 +1,19 @@
+# The difficulty is the one of the tray. A bad harvest spoils the plant and gives nothing, a good one gives more and
+# strengthens the plant. The targets are the tray and the plant in it.
+- type: skillCheck
+  id: Farming
+  parent: BaseSkillCheck
+  difficulty:
+  - var: targetDifficulty
+  effects:
+    Target:
+      AdditionalSuccess:
+      - !type:GenerateProduct
+        probability: 0.5
+      - !type:ChangePlantHolder
+        probability: 0.5
+        health: 10
+      Fail:
+      - !type:ChangePlantHolder
+        probability: 0.75
+        health: -10

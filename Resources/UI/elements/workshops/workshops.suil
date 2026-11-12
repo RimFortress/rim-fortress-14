@@ -47,6 +47,8 @@ let loc = workshop-menu;
             col #materials-box {
                 _ (margin: 1 0, text: $<loc>-recipe-materials)
             }
+
+            _ #difficulty-label (margin: 1 8, align-self: center)
         }
     }
 }

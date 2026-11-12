@@ -54,6 +54,7 @@
   abstract: true
   parent: BaseKitchenRecipe
   group: Savory
+  difficulty: 4
 
 - type: workshopRecipe
   id: RecipeAppendixBurger
