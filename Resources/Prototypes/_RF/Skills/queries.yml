@@ -21,6 +21,10 @@
 - type: skillQuery
   id: ShootGun
 
+# Changing the magazine of a gun.
+- type: skillQuery
+  id: ReloadGun
+
 # Treating a patient.
 - type: skillQuery
   id: Heal

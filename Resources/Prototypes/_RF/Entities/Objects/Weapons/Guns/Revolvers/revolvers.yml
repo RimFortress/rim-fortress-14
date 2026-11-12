@@ -6,3 +6,4 @@
   - type: SkillDifficulty
     difficulty:
       ShootGun: 8
+      ReloadGun: 5

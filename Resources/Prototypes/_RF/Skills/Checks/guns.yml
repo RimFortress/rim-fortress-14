@@ -23,3 +23,21 @@
     AdditionalSuccess:
     - var: difficulty
     - mul: [float: 6]
+
+# A skilled shooter stows the old magazine in their inventory instead of throwing it away, which is the additional
+# success, see GunActionSystem. The difficulty is the one of the gun.
+- type: skillCheck
+  id: GunReload
+  parent: BaseSkillCheck
+  difficulty:
+  - var: usedDifficulty
+  experience:
+    Fail:
+    - var: difficulty
+    - mul: [float: 0.5]
+    Success:
+    - var: difficulty
+    - mul: [float: 1]
+    AdditionalSuccess:
+    - var: difficulty
+    - mul: [float: 2]

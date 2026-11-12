@@ -3,18 +3,22 @@ using Content.Server._RF.NPC.GOAP.Actions.Movement;
 using Content.Server._RF.NPC.Search.Systems;
 using Content.Server._RF.NPC.Systems;
 using Content.Server.Hands.Systems;
-using Content.Server.NPC.Components;
+using Content.Server.Storage.EntitySystems;
 using Content.Server.Wieldable;
 using Content.Shared._RF.NPC.GOAP;
 using Content.Shared._RF.NPC.GOAP.Components;
 using Content.Shared._RF.NPC.GOAP.Systems;
 using Content.Shared._RF.NPC.Search.Prototypes;
+using Content.Shared._RF.Skills;
+using Content.Shared._RF.Skills.Prototypes;
 using Content.Shared.CombatMode;
 using Content.Shared.Containers.ItemSlots;
 using Content.Shared.Interaction;
+using Content.Shared.Inventory;
 using Content.Shared.Mobs;
 using Content.Shared.Mobs.Components;
 using Content.Shared.Physics;
+using Content.Shared.Storage;
 using Content.Shared.Throwing;
 using Content.Shared.Weapons.Ranged.Components;
 using Content.Shared.Weapons.Ranged.Events;
@@ -102,22 +106,25 @@ public sealed partial class Gun : BaseGoapAction<Gun>
 
 public sealed partial class GunActionSystem : GoapActionSystem<Gun>
 {
-    [Dependency] private SharedCombatModeSystem _combatMode = default!;
-    [Dependency] private SharedGunSystem _gun = default!;
-    [Dependency] private SharedInteractionSystem _interaction = default!;
-    [Dependency] private NpcSearcherSystem _searcher = default!;
-    [Dependency] private SharedTransformSystem _transform = default!;
-    [Dependency] private RotateToFaceSystem _rotate = default!;
-    [Dependency] private SharedMapSystem _map = default!;
-    [Dependency] private SharedAudioSystem _audio = default!;
-    [Dependency] private IGameTiming _timing = default!;
-    [Dependency] private ItemSlotsSystem _slots = default!;
-    [Dependency] private WieldableSystem _wield = default!;
-    [Dependency] private ThrowingSystem _throw = default!;
-    [Dependency] private IRobustRandom _random = default!;
-    [Dependency] private HandsSystem _hands = default!;
-    [Dependency] private NpcTimingSystem _npcTiming = default!;
-    [Dependency] private MoveToActionSystem _moveTo = default!;
+    [Dependency] private SharedCombatModeSystem _combatMode = null!;
+    [Dependency] private SharedGunSystem _gun = null!;
+    [Dependency] private SharedInteractionSystem _interaction = null!;
+    [Dependency] private NpcSearcherSystem _searcher = null!;
+    [Dependency] private SharedTransformSystem _transform = null!;
+    [Dependency] private RotateToFaceSystem _rotate = null!;
+    [Dependency] private SharedMapSystem _map = null!;
+    [Dependency] private SharedAudioSystem _audio = null!;
+    [Dependency] private IGameTiming _timing = null!;
+    [Dependency] private ItemSlotsSystem _slots = null!;
+    [Dependency] private WieldableSystem _wield = null!;
+    [Dependency] private ThrowingSystem _throw = null!;
+    [Dependency] private IRobustRandom _random = null!;
+    [Dependency] private HandsSystem _hands = null!;
+    [Dependency] private NpcTimingSystem _npcTiming = null!;
+    [Dependency] private MoveToActionSystem _moveTo = null!;
+    [Dependency] private SharedSkillsSystem _skills = null!;
+    [Dependency] private InventorySystem _inventory = null!;
+    [Dependency] private StorageSystem _storage = null!;
 
     [Dependency] private EntityQuery<MobStateComponent> _mobStateQuery;
     [Dependency] private EntityQuery<PhysicsComponent> _physicsQuery;
@@ -132,6 +139,7 @@ public sealed partial class GunActionSystem : GoapActionSystem<Gun>
     private static readonly ProtoId<SearchQueryPrototype> NearbyMagazineQuery = "NearbyMagazine";
     private static readonly StateKey<EntityWhitelist> MagazineWhitelistKey = "MagazineWhitelist";
     private static readonly StateKey<EntityWhitelist> MagazineBlacklistKey = "MagazineBlacklist";
+    private static readonly ProtoId<SkillQueryPrototype> ReloadGunQuery = "ReloadGun";
 
     private const float ShootSpeed = 20f;
 
@@ -472,15 +480,22 @@ public sealed partial class GunActionSystem : GoapActionSystem<Gun>
             (0.33f, 0.5f),
             onFinish: () =>
             {
-                if (_slots.TryEject(gun.Value, slot, ent, out var eject))
+                if (!_slots.TryEject(gun.Value, slot, ent, out var eject))
+                    return;
+
+                // A skilled shooter stows the old magazine in the inventory instead of throwing it away
+                if (_skills.DoCheck(ReloadGunQuery, ent.Owner, gun.Value) == SkillCheckResult.AdditionalSuccess
+                    && TryStowItem(ent, eject.Value))
                 {
-                    // For dramatic effect, throw the magazine in a random direction.
-                    _throw.TryThrow(eject.Value,
-                        _random.NextAngle().ToVec(),
-                        baseThrowSpeed: _random.NextFloat(1f, 10f),
-                        user: ent);
-                    // TODO: A skill check; if passed, the item will be stored in the inventory instead of being thrown away
+                    CreateDump($"old magazine {ToPrettyString(eject)} stowed");
+                    return;
                 }
+
+                // For dramatic effect, throw the magazine in a random direction.
+                _throw.TryThrow(eject.Value,
+                    _random.NextAngle().ToVec(),
+                    baseThrowSpeed: _random.NextFloat(1f, 10f),
+                    user: ent);
             });
 
         // Pickup and insert new magazine
@@ -517,5 +532,21 @@ public sealed partial class GunActionSystem : GoapActionSystem<Gun>
             });
 
         return GoapActionResult.Continuing;
+    }
+
+    /// <summary>
+    /// Puts the item into a storage the agent has on it, a backpack or a pocket.
+    /// </summary>
+    private bool TryStowItem(EntityUid agent, EntityUid item)
+    {
+        foreach (var entity in _inventory.GetHandOrInventoryEntities(agent))
+        {
+            if (entity != item
+                && TryComp(entity, out StorageComponent? storage)
+                && _storage.Insert(entity, item, out _, storageComp: storage))
+                return true;
+        }
+
+        return false;
     }
 }

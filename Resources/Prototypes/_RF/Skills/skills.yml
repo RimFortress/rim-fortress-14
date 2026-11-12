@@ -77,6 +77,8 @@
   checks:
     ShootGun:
     - GunShot
+    ReloadGun:
+    - GunReload
 
 - type: skill
   id: Farming
