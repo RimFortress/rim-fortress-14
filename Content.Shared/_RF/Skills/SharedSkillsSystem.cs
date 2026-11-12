@@ -369,171 +369,6 @@ public abstract partial class SharedSkillsSystem : EntitySystem
 
         Dirty(ent);
     }
-
-    #region Interactions
-
-    /// <summary>
-    /// Changes some input number depending on the result of the skill check for the interaction
-    /// </summary>
-    [PublicAPI, Pure]
-    public int GetInteractionResult(Entity<SkillInteractionComponent?> ent, Entity<SkillsComponent?> user, int value)
-        => (int)Math.Floor(GetInteractionResult(ent, user, (float)value));
-
-    /// <summary>
-    /// Changes some input number depending on the result of the skill check for the interaction
-    /// </summary>
-    [PublicAPI, Pure]
-    public float GetInteractionResult(Entity<SkillInteractionComponent?> ent, Entity<SkillsComponent?> user, float value)
-    {
-        if (!Resolve(ent, ref ent.Comp, false)
-            || !Resolve(user, ref user.Comp, false))
-            return value;
-
-        var delta = GetModifiedLevel(user, ent.Comp.Skill) - ent.Comp.TargetLevel;
-
-        var result = delta switch
-        {
-            0 => value,
-            > 0 => value + delta * ent.Comp.ResultFactor,
-            < 0 => value - delta * ent.Comp.ResultFactor,
-        };
-
-        return Math.Clamp(result, ent.Comp.MinResult, ent.Comp.MaxResult);
-    }
-
-    /// <summary>
-    /// Returns the duration of interaction execution depending on the current skill level
-    /// </summary>
-    [PublicAPI, Pure]
-    public TimeSpan GetDelay(Entity<SkillInteractionComponent?> ent,
-        Entity<SkillsComponent?> user,
-        TimeSpan delay)
-        => TimeSpan.FromSeconds(GetDelay(ent, user, (float)delay.TotalSeconds));
-
-    /// <summary>
-    /// Returns the duration of interaction execution depending on the current skill level
-    /// </summary>
-    [PublicAPI, Pure]
-    public float GetDelay(Entity<SkillInteractionComponent?> ent, Entity<SkillsComponent?> user, float delay)
-    {
-        if (!Resolve(ent, ref ent.Comp, false) || !Resolve(user, ref user.Comp, false))
-            return delay;
-
-        var delta = GetModifiedLevel(user, ent.Comp.Skill) - ent.Comp.TargetLevel;
-
-        return Math.Clamp(delay - delta * ent.Comp.DoAfterFactor,
-            ent.Comp.MinDoAfterTime,
-            ent.Comp.MaxDoAfterTime);
-    }
-
-    /// <summary>
-    /// Performs skill checks for interaction and, according to the result of the check,
-    /// gives out experience and triggers interaction effects
-    /// </summary>
-    /// <param name="ent">An entity that will perform a skill check</param>
-    /// <param name="user">The user who performs the interaction</param>
-    /// <param name="target">Target entity of the interaction</param>
-    /// <returns>Skills check result for interaction</returns>
-    [PublicAPI]
-    public SkillCheckResult DoInteractionCheck(
-        Entity<SkillInteractionComponent?> ent,
-        Entity<SkillsComponent?> user,
-        EntityUid? target = null)
-    {
-        var targets = new List<EntityUid>();
-
-        if (target != null)
-            targets.Add(target.Value);
-
-        return DoInteractionCheck(ent, user, targets);
-    }
-
-    /// <summary>
-    /// Performs skill checks for interaction and, according to the result of the check,
-    /// gives out experience and triggers interaction effects
-    /// </summary>
-    /// <param name="ent">An entity that will perform a skill check</param>
-    /// <param name="user">The user who performs the interaction</param>
-    /// <param name="targets">Target entities of the interaction</param>
-    /// <returns>Skills check result for interaction</returns>
-    [PublicAPI]
-    public SkillCheckResult DoInteractionCheck(
-        Entity<SkillInteractionComponent?> ent,
-        Entity<SkillsComponent?> user,
-        List<EntityUid> targets)
-    {
-        if (!Resolve(ent, ref ent.Comp, false) || !Resolve(user, ref user.Comp, false))
-            return SkillCheckResult.Success;
-
-        var interact = ent.Comp;
-        var delta = GetModifiedLevel(user, interact.Skill) - interact.TargetLevel;
-        var successChance = interact.SuccessFactor * delta + 0.2f;
-        var failChance = 0.4f - successChance;
-
-        var fail = Random.Prob(Math.Clamp(failChance, 0, 1));
-        var success = Random.Prob(Math.Clamp(successChance, 0, 1));
-
-        // Query all participants in the interaction to get the final experience modifiers
-        var ev = new GetSkillExpModifierEvent(ent, ent.Comp.Skill, interact.Experience, 1f);
-        RaiseLocalEvent(ent, ref ev);
-        RaiseLocalEvent(user, ref ev);
-
-        foreach (var target in targets)
-        {
-            RaiseLocalEvent(target, ref ev);
-        }
-
-        var experience = ev.Modificator * ev.Multiplier;
-
-        if (success)
-        {
-            AddExperience(user, ent.Comp.Skill, (int)(experience * interact.ExpSuccessFactor));
-
-            _entityEffects.ApplyEffects(ent, interact.SuccessEffects);
-            _entityEffects.ApplyEffects(user, interact.SuccessUserEffects);
-
-            foreach (var target in targets)
-            {
-                _entityEffects.ApplyEffects(target, interact.SuccessTargetEffects);
-            }
-
-#if DEBUG
-            Log.Debug($"user has passed the entity skill test with success. " +
-                      $"User: {ToPrettyString(user)}, checker: {ToPrettyString(ent)}, " +
-                      $"targets: {string.Join(", ", targets.Select(x => ToPrettyString(x)))}, " +
-                      $"Checked skill: {Loc.GetString(Proto.Index(ent.Comp.Skill).Name)}");
-#endif
-
-            return SkillCheckResult.AdditionalSuccess;
-        }
-
-        if (fail)
-        {
-            AddExperience(user, ent.Comp.Skill, (int)(experience * interact.ExpFailFactor));
-
-            _entityEffects.ApplyEffects(ent, interact.FailEffects);
-            _entityEffects.ApplyEffects(user, interact.FailUserEffects);
-
-            foreach (var target in targets)
-            {
-                _entityEffects.ApplyEffects(target, interact.FailTargetEffects);
-            }
-
-#if DEBUG
-            Log.Debug($"user failed the entity skill test. " +
-                      $"User: {ToPrettyString(user)}, checker: {ToPrettyString(ent)}, " +
-                      $"targets: {string.Join(", ", targets.Select(x => ToPrettyString(x)))}, " +
-                      $"Checked skill: {Loc.GetString(Proto.Index(ent.Comp.Skill).Name)}");
-#endif
-
-            return SkillCheckResult.Fail;
-        }
-
-        AddExperience(user, ent.Comp.Skill, (int)experience);
-        return SkillCheckResult.Success;
-    }
-
-    #endregion
 }
 
 [Serializable, NetSerializable]
@@ -573,6 +408,14 @@ public enum SkillCheckResult : byte
     /// The interaction failed with the invocation of additional effects.
     /// </summary>
     Fail,
+}
+
+public static class SkillCheckResultExtensions
+{
+    extension(SkillCheckResult result)
+    {
+        public bool IsFail => result == SkillCheckResult.Fail;
+    }
 }
 
 /// <summary>

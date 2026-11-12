@@ -1,0 +1,22 @@
+# What the code asks the skills of the user for, see SkillQueryPrototype.
+# Which skills answer these and by which checks is up to the skills, see the "checks" of a skill.
+
+# A hit of a melee weapon or fists.
+- type: skillQuery
+  id: MeleeAttack
+
+# Using a tool on a target.
+- type: skillQuery
+  id: UseTool
+
+# A step of a construction: what is done to the construction.
+- type: skillQuery
+  id: Construct
+
+# Crafting at a workshop.
+- type: skillQuery
+  id: Craft
+
+# An agent firing a gun at a target.
+- type: skillQuery
+  id: ShootGun

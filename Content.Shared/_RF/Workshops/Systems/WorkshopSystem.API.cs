@@ -132,7 +132,7 @@ public sealed partial class WorkshopSystem
             return false;
 
         GetIngredientsEntities(ent, proto, out var entities);
-        var delay = _skills.GetDelay(ent.Owner, user.Value, proto.CraftingTime) * ent.Comp.CraftingTimeModifier;
+        var delay = _skills.GetDelay(CraftQuery, user.Value, ent.Owner, proto.CraftingTime) * ent.Comp.CraftingTimeModifier;
         var ev = new WorkshopCraftingDoAfterEvent
         {
             Recipe = proto,

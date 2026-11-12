@@ -361,21 +361,6 @@ public sealed partial class GunActionSystem : GoapActionSystem<Gun>
                 return coords;
 
             var offset = agentBody.AngularVelocity * MovementScatterFactor + 0.5f;
-            /* TODO: skills refactor
-
-            offset = _skills.GetInteractionResult(gun.Owner, ent.Owner, offset);
-
-            switch (_skills.DoInteractionCheck(gun.Owner, ent.Owner, target))
-            {
-                case SkillCheckResult.AdditionalSuccess:
-                    offset /= 2;
-                    break;
-                case SkillCheckResult.Fail:
-                    offset *= 2;
-                    break;
-            }
-            */
-
             var offsetVec = new Vector2(_random.NextFloat(-offset, offset), _random.NextFloat(-offset, offset));
             return new EntityCoordinates(coords.EntityId, coords.Position + offsetVec);
         }

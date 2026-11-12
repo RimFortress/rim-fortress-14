@@ -1,5 +1,4 @@
 using System.Linq;
-using Content.Shared._RF.Skills; // RimFortress
 using Content.Shared.Administration.Logs;
 using Content.Shared.Chemistry.EntitySystems;
 using Content.Shared.DoAfter;
@@ -17,6 +16,11 @@ using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
+
+// RimFortress Start
+using Content.Shared._RF.Skills;
+using Content.Shared._RF.Skills.Prototypes;
+// RimFortress End
 
 namespace Content.Shared.Tools.Systems;
 
@@ -37,6 +41,8 @@ public abstract partial class SharedToolSystem : EntitySystem
     [Dependency] private TurfSystem _turfs = default!;
     [Dependency] private SharedSkillsSystem _skills = default!; // RimFortress
 
+    private static readonly ProtoId<SkillQueryPrototype> UseToolQuery = "UseTool"; // RimFortress
+
     public const string CutQuality = "Cutting";
     public const string PulseQuality = "Pulsing";
 
@@ -52,7 +58,7 @@ public abstract partial class SharedToolSystem : EntitySystem
     private void OnDoAfter(EntityUid uid, ToolComponent tool, ToolDoAfterEvent args)
     {
         // RimFortress Start
-        if (_skills.DoInteractionCheck(uid, args.User, args.Target) == SkillCheckResult.Fail)
+        if (_skills.DoCheck(UseToolQuery, args.User, uid, args.Target).IsFail)
             return;
         // RimFortress End
 
@@ -185,7 +191,7 @@ public abstract partial class SharedToolSystem : EntitySystem
             ExamineText = examineText,
         };
 
-        doAfterArgs.Delay = _skills.GetDelay(tool, user, doAfterArgs.Delay); // RimFortress
+        doAfterArgs.Delay = _skills.GetDelay(UseToolQuery, user, tool, doAfterArgs.Delay, target); // RimFortress
 
         _doAfterSystem.TryStartDoAfter(doAfterArgs, out id);
         return true;

@@ -1,6 +1,8 @@
 using System.Numerics;
 using Content.Server.Cargo.Systems;
 using Content.Server.Weapons.Ranged.Components;
+using Content.Shared._RF.Skills; // RimFortress
+using Content.Shared._RF.Skills.Prototypes; // RimFortress
 using Content.Shared.Cargo;
 using Content.Shared.Damage;
 using Content.Shared.Projectiles;
@@ -24,6 +26,9 @@ public sealed partial class GunSystem : SharedGunSystem
 {
     [Dependency] private PricingSystem _pricing = default!;
     [Dependency] private SharedMapSystem _map = default!;
+    [Dependency] private SharedSkillsSystem _skills = default!; // RimFortress
+
+    private static readonly ProtoId<SkillQueryPrototype> ShootGunQuery = "ShootGun"; // RimFortress
 
     private const float DamagePitchVariation = 0.05f;
 
@@ -63,13 +68,15 @@ public sealed partial class GunSystem : SharedGunSystem
                 userImpulse = false;
                 return;
             }
+
+            _skills.DoCheck(ShootGunQuery, user.Value, gun, gun.Comp.Target); // RimFortress
         }
 
         var fromMap = TransformSystem.ToMapCoordinates(fromCoordinates);
         var toMap = TransformSystem.ToMapCoordinates(toCoordinates).Position;
         var mapDirection = toMap - fromMap.Position;
         var mapAngle = mapDirection.ToAngle();
-        var angle = GetRecoilAngle(Timing.CurTime, gun, mapDirection.ToAngle());
+        var angle = GetRecoilAngle(Timing.CurTime, gun, mapDirection.ToAngle(), user); // RimFortress
 
         // If applicable, this ensures the projectile is parented to grid on spawn, instead of the map.
         var fromEnt = Maps.TryFindGridAt(fromMap, out var gridUid, out _)
@@ -232,8 +239,9 @@ public sealed partial class GunSystem : SharedGunSystem
         return angles;
     }
 
-    private Angle GetRecoilAngle(TimeSpan curTime, GunComponent component, Angle direction)
+    private Angle GetRecoilAngle(TimeSpan curTime, Entity<GunComponent> gun, Angle direction, EntityUid? user) // RimFortress
     {
+        var component = gun.Comp; // RimFortress
         var timeSinceLastFire = (curTime - component.LastFire).TotalSeconds;
         var newTheta = MathHelper.Clamp(component.CurrentAngle.Theta + component.AngleIncreaseModified.Theta - component.AngleDecayModified.Theta * timeSinceLastFire, component.MinAngleModified.Theta, component.MaxAngleModified.Theta);
         component.CurrentAngle = new Angle(newTheta);
@@ -242,8 +250,17 @@ public sealed partial class GunSystem : SharedGunSystem
         // Convert it so angle can go either side.
         var random = Random.NextFloat(-0.5f, 0.5f);
         var spread = component.CurrentAngle.Theta * random;
-        var angle = new Angle(direction.Theta + component.CurrentAngle.Theta * random);
         DebugTools.Assert(spread <= component.MaxAngleModified.Theta);
+
+        // RimFortress Start
+        // The skill of the shooter changes the spread of the shot, but not the angle that is kept by the gun
+        var theta = (float) component.CurrentAngle.Theta;
+
+        if (user != null)
+            theta = Math.Max(0f, _skills.GetResult(ShootGunQuery, user.Value, gun, theta, component.Target));
+
+        var angle = new Angle(direction.Theta + theta * random);
+        // RimFortress End
         return angle;
     }
 
