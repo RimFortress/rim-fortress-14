@@ -28,7 +28,6 @@ let loc = workshop-menu;
             }
             +_ #name-label (margin: 0 10, align-self: center)
             _ .flex-fill
-            _ #difficulty-label .label-secondary-color (margin: 0 8, align-self: center)
             _ #time-label .label-secondary-color (margin: 0 3, align-self: center)
             _ #group-marker .high-divider (reserves-space, margin: 2 3)
         }
@@ -48,6 +47,8 @@ let loc = workshop-menu;
             col #materials-box {
                 _ (margin: 1 0, text: $<loc>-recipe-materials)
             }
+
+            _ #difficulty-label (margin: 1 8, align-self: center)
         }
     }
 }
