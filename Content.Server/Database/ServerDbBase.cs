@@ -20,8 +20,6 @@ using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization.Manager;
 using Robust.Shared.Utility;
 
-using Content.Shared._RF.Skills; // RimFortress
-
 namespace Content.Server.Database
 {
     public abstract class ServerDbBase

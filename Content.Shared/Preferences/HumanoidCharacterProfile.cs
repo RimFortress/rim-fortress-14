@@ -25,8 +25,8 @@ using Robust.Shared;
 using YamlDotNet.RepresentationModel;
 
 // RimFortress Start
-using Content.Shared._RF.Skills;
 using Content.Shared._RF.CCVar;
+using Content.Shared._RF.Skills.Prototypes;
 // RimFortress End
 
 namespace Content.Shared.Preferences

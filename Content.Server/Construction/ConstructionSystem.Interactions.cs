@@ -1,5 +1,4 @@
 using System.Linq;
-using Content.Server._RF.Skills; // RimFortress
 using Content.Server.Administration.Logs;
 using Content.Server.Construction.Components;
 using Content.Server.Temperature.Components;
@@ -32,7 +31,7 @@ namespace Content.Server.Construction
 #if EXCEPTION_TOLERANCE
         [Dependency] private IRuntimeLog _runtimeLog = default!;
 #endif
-        [Dependency] private SkillsSystem _skills = default!; // RimFortress
+        [Dependency] private SharedSkillsSystem _skills = default!; // RimFortress
 
         private readonly Queue<EntityUid> _constructionUpdateQueue = new();
         private readonly HashSet<EntityUid> _queuedUpdates = new();

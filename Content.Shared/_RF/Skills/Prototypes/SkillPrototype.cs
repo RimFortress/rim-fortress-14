@@ -3,7 +3,7 @@ using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype.Array;
 using Robust.Shared.Utility;
 
-namespace Content.Shared._RF.Skills;
+namespace Content.Shared._RF.Skills.Prototypes;
 
 [Prototype]
 public sealed partial class SkillPrototype : IPrototype, IInheritingPrototype
@@ -21,71 +21,79 @@ public sealed partial class SkillPrototype : IPrototype, IInheritingPrototype
     public string ID { get; private set; } = default!;
 
     /// <summary>
-    /// Human-readable skill name
+    /// Human-readable skill name.
     /// </summary>
     [DataField]
     public LocId Name;
 
     /// <summary>
     /// What is the name of the profession for the skill.
-    /// For example, if the skill is called “mining”, then the profession is called “miner”
+    /// For example, if the skill is called “mining”, then the profession is called “miner”.
     /// </summary>
     [DataField]
     public LocId? Profession;
 
     /// <summary>
-    /// Prefixes to be applied to a profession name depending on skill level
+    /// Prefixes to be applied to a profession name depending on skill level.
     /// </summary>
     [DataField]
     public Dictionary<int, LocId> LevelPrefixes = new();
 
     /// <summary>
-    /// Path to the skill icon that will be displayed in the interface
+    /// Path to the skill icon that will be displayed in the interface.
     /// </summary>
     [DataField]
     public SpriteSpecifier? Icon;
 
     /// <summary>
-    /// Color of the skill, used for display in the interface (text and icon)
+    /// Color of the skill, used for display in the interface (text and icon).
     /// </summary>
     [DataField]
     public Color Color = Color.White;
 
     /// <summary>
-    /// Maximum skill level
+    /// Maximum skill level.
     /// </summary>
     [DataField]
     public int MaxLevel;
 
     /// <summary>
-    /// Maximum skill level a player can set in the lobby
+    /// Maximum skill level a player can set in the lobby.
     /// </summary>
     [DataField]
     public int MaxPreferencesLevel;
 
     /// <summary>
-    /// How many points does one level of this skill cost when customizing a character
+    /// How many points does one level of this skill cost when customizing a character.
     /// </summary>
     [DataField]
     public int LevelPreferencesPoints;
 
     /// <summary>
-    /// Basic amount of experience points required to increase the skill level
+    /// Basic amount of experience points required to increase the skill level.
     /// </summary>
     [DataField]
     public int LevelUpExp;
 
     /// <summary>
-    /// The multiplier by which <see cref="LevelUpExp"/> will be increased with each level
+    /// The multiplier by which <see cref="LevelUpExp"/> will be increased with each level.
     /// </summary>
     [DataField]
     public float LevelExpMultiplier;
 
     /// <summary>
-    /// The effects that will be applied to an entity when specific levels are reached
+    /// The checks the skill performs for each query. When a query is asked for, the checks of the list are
+    /// tried by the order of <see cref="SkillCheckPrototype.Priority"/> and then of the list, and the first one
+    /// whose conditions are met is performed.
+    /// </summary>
+    [DataField]
+    public Dictionary<ProtoId<SkillQueryPrototype>, List<ProtoId<SkillCheckPrototype>>> Checks = new();
+
+    /// <summary>
+    /// The effects that will be applied to an entity when specific levels are reached.
     /// </summary>
     /// <remarks>
-    /// The effects for level zero are applied every level up
+    /// The effects for level zero are applied every level up.
     /// </remarks>
     [DataField]
     public Dictionary<int, EntityEffect[]> LevelUpEffects = new();

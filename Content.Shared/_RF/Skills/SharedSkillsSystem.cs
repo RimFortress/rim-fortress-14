@@ -1,10 +1,12 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Shared._RF.Skills.Components;
+using Content.Shared._RF.Skills.Prototypes;
 using Content.Shared.EntityEffects;
 using JetBrains.Annotations;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
+using Robust.Shared.Serialization;
 
 namespace Content.Shared._RF.Skills;
 
@@ -13,23 +15,13 @@ namespace Content.Shared._RF.Skills;
 /// </summary>
 public abstract partial class SharedSkillsSystem : EntitySystem
 {
-    [Dependency] protected IPrototypeManager Proto = default!;
-    [Dependency] protected IRobustRandom Random = default!;
-    [Dependency] private SharedEntityEffectsSystem _entityEffects = default!;
+    [Dependency] protected IPrototypeManager Proto = null!;
+    [Dependency] protected IRobustRandom Random = null!;
+    [Dependency] private SharedEntityEffectsSystem _entityEffects = null!;
 
     public const string DefaultSkillProfession = "skill-profession-default";
 
-    protected ISawmill Sawmill = default!;
-
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        Sawmill = LogManager.GetSawmill("skills");
-
-        SubscribeLocalEvent<SkillExpModificatorComponent, GetSkillExpModifierEvent>(OnGetExpModifier);
-    }
-
+    [SubscribeLocalEvent]
     private static void OnGetExpModifier(Entity<SkillExpModificatorComponent> ent, ref GetSkillExpModifierEvent ev)
     {
         if (ent.Comp.FlatModificators.TryGetValue(ev.Skill, out var modificator))
@@ -45,6 +37,7 @@ public abstract partial class SharedSkillsSystem : EntitySystem
     /// <remarks>
     /// Returns the default profession name if no matching one is found
     /// </remarks>
+    [PublicAPI, Pure]
     public string SkillProfession(Entity<SkillsComponent?> ent)
     {
         var defaultProf = Loc.GetString(DefaultSkillProfession);
@@ -73,6 +66,7 @@ public abstract partial class SharedSkillsSystem : EntitySystem
         return SkillProfession(ent, bestSkill.Value.Skill) ?? defaultProf;
     }
 
+    [PublicAPI, Pure]
     public string SkillProfession(IReadOnlyDictionary<ProtoId<SkillPrototype>, int> skills)
     {
         var defaultProf = Loc.GetString(DefaultSkillProfession);
@@ -101,14 +95,14 @@ public abstract partial class SharedSkillsSystem : EntitySystem
     /// <summary>
     /// Returns the profession name for the given skill according to the current level
     /// </summary>
+    [PublicAPI, Pure]
     public string? SkillProfession(Entity<SkillsComponent?> ent, ProtoId<SkillPrototype> skill)
-    {
-        return SkillProfession(skill, GetLevel(ent, skill));
-    }
+        => SkillProfession(skill, GetLevel(ent, skill));
 
     /// <summary>
     /// Returns the profession name for the given skill according to the current level
     /// </summary>
+    [PublicAPI, Pure]
     public string? SkillProfession(ProtoId<SkillPrototype> skill, int level)
     {
         if (!Proto.TryIndex(skill, out var proto) || proto.Profession == null)
@@ -133,14 +127,14 @@ public abstract partial class SharedSkillsSystem : EntitySystem
     /// Returns the maximum level of the given skill.
     /// </summary>
     /// <param name="skill">Skill prototype.</param>
-    [PublicAPI]
+    [PublicAPI, Pure]
     public int GetMaxLevel(ProtoId<SkillPrototype> skill)
         => Proto.Resolve(skill, out var proto) ? proto.MaxLevel : 0;
 
     /// <summary>
     /// Returns the current skill level of the entity
     /// </summary>
-    [PublicAPI]
+    [PublicAPI, Pure]
     public int GetLevel(Entity<SkillsComponent?> ent, ProtoId<SkillPrototype> skill)
     {
         if (!Resolve(ent, ref ent.Comp, false)
@@ -153,7 +147,7 @@ public abstract partial class SharedSkillsSystem : EntitySystem
     /// <summary>
     /// Returns the skill level of the entity using all valid modifiers
     /// </summary>
-    [PublicAPI]
+    [PublicAPI, Pure]
     public int GetModifiedLevel(Entity<SkillsComponent?> ent, ProtoId<SkillPrototype> skill)
     {
         if (!Proto.TryIndex(skill, out var proto))
@@ -168,7 +162,7 @@ public abstract partial class SharedSkillsSystem : EntitySystem
     /// <summary>
     /// Calculates the skill level for a given amount of experience
     /// </summary>
-    [PublicAPI]
+    [PublicAPI, Pure]
     public int GetLevel(ProtoId<SkillPrototype> skill, int experience)
     {
         if (!Proto.TryIndex(skill, out var proto)
@@ -193,7 +187,7 @@ public abstract partial class SharedSkillsSystem : EntitySystem
     /// <summary>
     /// Returns the maximum amount of experience for the given skill level
     /// </summary>
-    [PublicAPI]
+    [PublicAPI, Pure]
     public int GetLevelMaxPoints(ProtoId<SkillPrototype> skill, int level)
     {
         if (!Proto.TryIndex(skill, out var proto))
@@ -212,11 +206,11 @@ public abstract partial class SharedSkillsSystem : EntitySystem
     /// <summary>
     /// Returns the minimum amount of experience for the given skill level
     /// </summary>
-    [PublicAPI]
+    [PublicAPI, Pure]
     public int GetLevelMinPoints(ProtoId<SkillPrototype> skill, int level)
         => level <= 0 ? 0 : GetLevelMaxPoints(skill, level - 1);
 
-    [PublicAPI]
+    [PublicAPI, Pure]
     public bool TryGetSkillData(
         Entity<SkillsComponent?> ent,
         ProtoId<SkillPrototype> skill,
@@ -282,6 +276,7 @@ public abstract partial class SharedSkillsSystem : EntitySystem
     /// <summary>
     /// Adds a skill for an entity
     /// </summary>
+    [PublicAPI]
     protected bool AddSkill(
         Entity<SkillsComponent?> ent,
         ProtoId<SkillPrototype> skill,
@@ -312,19 +307,82 @@ public abstract partial class SharedSkillsSystem : EntitySystem
         return true;
     }
 
+    /// <summary>
+    /// Sets the skill level of an entity
+    /// </summary>
+    [PublicAPI]
+    public void SetSkillLevel(Entity<SkillsComponent?> ent, ProtoId<SkillPrototype> skill, int level, bool dirty = true)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return;
+
+        if (!TryGetSkillData(ent, skill, out var data) && !AddSkill(ent, skill, out data, false))
+            return;
+
+        var exp = GetLevelMinPoints(skill, level) - data.CurrentExp;
+
+        if (level != 0)
+            exp++;
+
+        AddExperience(ent, skill, exp, dirty);
+    }
+
+    /// <summary>
+    /// Randomizes the skill level of the entity
+    /// </summary>
+    /// <param name="ent">Entity</param>
+    /// <param name="skills">Skills that need to be randomized</param>
+    /// <param name="levels">How many levels will be randomly given out for these skills</param>
+    /// <param name="maxLevel">Maximum level that can be given by randomization</param>
+    /// <remarks>
+    /// If <paramref name="levels"/> more than <paramref name="maxLevel"/> * <paramref name="skills"/>.Count
+    /// then in total the entity will gain <paramref name="maxLevel"/> * <paramref name="skills"/>.Count skill levels
+    /// </remarks>
+    [PublicAPI]
+    public void RandomizeSkills(Entity<SkillsComponent?> ent, List<ProtoId<SkillPrototype>> skills, int levels, int maxLevel)
+    {
+        if (!Resolve(ent, ref ent.Comp))
+            return;
+
+        foreach (var skill in skills)
+        {
+            SetSkillLevel(ent, skill, 0, false);
+        }
+
+        while (levels > 0 && skills.Count != 0)
+        {
+            var skill = Random.Pick(skills);
+
+            if (!TryGetSkillData(ent, skill, out var data) && !AddSkill(ent, skill, out data, false))
+                continue;
+
+            var level = Math.Min(Random.Next(1, maxLevel - data.CurrentLevel), levels);
+
+            levels -= level;
+            level += data.CurrentLevel;
+
+            if (level >= maxLevel)
+                skills.Remove(skill);
+
+            SetSkillLevel(ent, skill, level, false);
+        }
+
+        Dirty(ent);
+    }
+
     #region Interactions
 
     /// <summary>
     /// Changes some input number depending on the result of the skill check for the interaction
     /// </summary>
-    [PublicAPI]
+    [PublicAPI, Pure]
     public int GetInteractionResult(Entity<SkillInteractionComponent?> ent, Entity<SkillsComponent?> user, int value)
         => (int)Math.Floor(GetInteractionResult(ent, user, (float)value));
 
     /// <summary>
     /// Changes some input number depending on the result of the skill check for the interaction
     /// </summary>
-    [PublicAPI]
+    [PublicAPI, Pure]
     public float GetInteractionResult(Entity<SkillInteractionComponent?> ent, Entity<SkillsComponent?> user, float value)
     {
         if (!Resolve(ent, ref ent.Comp, false)
@@ -346,7 +404,7 @@ public abstract partial class SharedSkillsSystem : EntitySystem
     /// <summary>
     /// Returns the duration of interaction execution depending on the current skill level
     /// </summary>
-    [PublicAPI]
+    [PublicAPI, Pure]
     public TimeSpan GetDelay(Entity<SkillInteractionComponent?> ent,
         Entity<SkillsComponent?> user,
         TimeSpan delay)
@@ -355,7 +413,7 @@ public abstract partial class SharedSkillsSystem : EntitySystem
     /// <summary>
     /// Returns the duration of interaction execution depending on the current skill level
     /// </summary>
-    [PublicAPI]
+    [PublicAPI, Pure]
     public float GetDelay(Entity<SkillInteractionComponent?> ent, Entity<SkillsComponent?> user, float delay)
     {
         if (!Resolve(ent, ref ent.Comp, false) || !Resolve(user, ref user.Comp, false))
@@ -440,10 +498,10 @@ public abstract partial class SharedSkillsSystem : EntitySystem
             }
 
 #if DEBUG
-            Sawmill.Debug($"user has passed the entity skill test with success. " +
-                          $"User: {ToPrettyString(user)}, checker: {ToPrettyString(ent)}, " +
-                          $"targets: {string.Join(", ", targets.Select(x => ToPrettyString(x)))}, " +
-                          $"Checked skill: {Loc.GetString(Proto.Index(ent.Comp.Skill).Name)}");
+            Log.Debug($"user has passed the entity skill test with success. " +
+                      $"User: {ToPrettyString(user)}, checker: {ToPrettyString(ent)}, " +
+                      $"targets: {string.Join(", ", targets.Select(x => ToPrettyString(x)))}, " +
+                      $"Checked skill: {Loc.GetString(Proto.Index(ent.Comp.Skill).Name)}");
 #endif
 
             return SkillCheckResult.AdditionalSuccess;
@@ -462,10 +520,10 @@ public abstract partial class SharedSkillsSystem : EntitySystem
             }
 
 #if DEBUG
-            Sawmill.Debug($"user failed the entity skill test. " +
-                          $"User: {ToPrettyString(user)}, checker: {ToPrettyString(ent)}, " +
-                          $"targets: {string.Join(", ", targets.Select(x => ToPrettyString(x)))}, " +
-                          $"Checked skill: {Loc.GetString(Proto.Index(ent.Comp.Skill).Name)}");
+            Log.Debug($"user failed the entity skill test. " +
+                      $"User: {ToPrettyString(user)}, checker: {ToPrettyString(ent)}, " +
+                      $"targets: {string.Join(", ", targets.Select(x => ToPrettyString(x)))}, " +
+                      $"Checked skill: {Loc.GetString(Proto.Index(ent.Comp.Skill).Name)}");
 #endif
 
             return SkillCheckResult.Fail;
@@ -478,20 +536,41 @@ public abstract partial class SharedSkillsSystem : EntitySystem
     #endregion
 }
 
+[Serializable, NetSerializable]
+public enum SkillCheckTarget : byte
+{
+    /// <summary>
+    /// The entity that initiated the action (hit another entity, picked it up, etc.).
+    /// </summary>
+    User,
+
+    /// <summary>
+    /// An entity that serves as an intermediary between the <see cref="User"/>
+    /// and the <see cref="Target"/> — most often a tool in the user’s hand.
+    /// </summary>
+    Used,
+
+    /// <summary>
+    /// The target of <see cref="User"/> interaction.
+    /// </summary>
+    Target,
+}
+
+[Serializable, NetSerializable]
 public enum SkillCheckResult : byte
 {
     /// <summary>
-    /// Interaction successfully completed with additional effects invoked
+    /// Interaction successfully completed with additional effects invoked.
     /// </summary>
     AdditionalSuccess,
 
     /// <summary>
-    /// Interaction successfully completed
+    /// Interaction successfully completed.
     /// </summary>
     Success,
 
     /// <summary>
-    /// The interaction failed with the invocation of additional effects
+    /// The interaction failed with the invocation of additional effects.
     /// </summary>
     Fail,
 }
@@ -499,22 +578,10 @@ public enum SkillCheckResult : byte
 /// <summary>
 /// Raised when the skill level of an entity changes
 /// </summary>
-[Serializable]
-public sealed class SkillLevelChanged(int level, int oldLevel) : EntityEventArgs
-{
-    /// <summary>
-    /// Current skill level
-    /// </summary>
-    public int Level { get; } = level;
-
-    /// <summary>
-    /// Previous skill level
-    /// </summary>
-    /// <remarks>
-    /// It is not always equal to Level - 1!
-    /// </remarks>
-    public int OldLevel { get; } = oldLevel;
-}
+/// <param name="Level">Current skill level.</param>
+/// <param name="OldLevel">Previous skill level. It is not always equal to Level - 1.</param>
+[PublicAPI]
+public record struct SkillLevelChanged(int Level, int OldLevel);
 
 /// <summary>
 /// Event called to get information about experience modifiers for a particular skill

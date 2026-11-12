@@ -1,4 +1,3 @@
-using Content.Suil;
 using Content.Client._RF.Skills;
 using Content.Client._RF.UserInterface.Controls;
 using Content.Shared.Preferences;

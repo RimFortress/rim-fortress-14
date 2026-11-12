@@ -1,5 +1,6 @@
 using Content.Shared._RF.MathHelpers.MathCurve.Systems;
 using Content.Shared._RF.Skills;
+using Content.Shared._RF.Skills.Prototypes;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared._RF.MathHelpers.MathCurve.Curves;
@@ -24,7 +25,7 @@ public sealed partial class SkillLevel : BaseMathCurve<SkillLevel>
 
 public sealed partial class SkillLevelSystem : MathCurveSystem<SkillLevel>
 {
-    [Dependency] private SharedSkillsSystem _skills = default!;
+    [Dependency] private SharedSkillsSystem _skills = null!;
 
     protected override float Curve(SkillLevel curve, float input, MathCurveContext ctx)
     {

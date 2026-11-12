@@ -1,3 +1,4 @@
+using Content.Shared._RF.Skills.Prototypes;
 using Content.Shared.EntityEffects;
 using Robust.Shared.Prototypes;
 

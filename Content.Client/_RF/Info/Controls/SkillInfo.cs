@@ -1,8 +1,8 @@
 using Content.Client._RF.Suil;
 using Content.Client._RF.Skills;
 using Content.Client._RF.UserInterface.Controls;
-using Content.Shared._RF.Skills;
 using Content.Shared._RF.Skills.Components;
+using Content.Shared._RF.Skills.Prototypes;
 using Robust.Client.GameObjects;
 using Robust.Shared.Prototypes;
 
@@ -31,11 +31,12 @@ public sealed partial class SkillInfo : RfBoxContainer
         // and when receiving it on the client also call the update event on the client,
         // to which you can subscribe in the UI and blah blah blah....
         // But I'm lazy, so what will update the information once every some time, it's not that costly anyway
-        Scope.Every(UpdateRate, () =>
-        {
-            if (_uid != null && _skill != null)
-                UpdateInfo(_uid.Value, _skill.Value);
-        });
+        Scope.Every(UpdateRate,
+            () =>
+            {
+                if (_uid != null && _skill != null)
+                    UpdateInfo(_uid.Value, _skill.Value);
+            });
     }
 
     public void UpdateInfo(EntityUid uid, ProtoId<SkillPrototype> skill)
