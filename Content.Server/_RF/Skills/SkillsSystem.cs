@@ -1,3 +1,5 @@
+using Content.Server.Construction;
+using Content.Server.Construction.Components;
 using Content.Shared._RF.Skills;
 using Content.Shared._RF.Skills.Components;
 
@@ -21,5 +23,24 @@ public sealed partial class SkillsSystem : SharedSkillsSystem
             ent.Comp.RandomizeSkills,
             ent.Comp.RandomLevels.Next(Random),
             ent.Comp.MaxRandomLevel);
+    }
+
+    /// <summary>
+    /// A construction becomes another entity at every step (the ghost, the frame, the next frame...), and the difficulty
+    /// of the construction goes with it: otherwise the steps that follow the first one would not be a skill matter.
+    /// </summary>
+    [SubscribeLocalEvent]
+    private void OnConstructionChange(EntityUid uid, SkillDifficultyComponent component, ConstructionChangeEntityEvent args)
+    {
+        // The event is raised at the new entity too
+        if (uid != args.Old || !HasComp<ConstructionComponent>(args.New))
+            return;
+
+        var difficulty = EnsureComp<SkillDifficultyComponent>(args.New);
+
+        foreach (var (query, value) in component.Difficulty)
+        {
+            difficulty.Difficulty[query] = value;
+        }
     }
 }
