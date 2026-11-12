@@ -29,6 +29,7 @@
   abstract: true
   group: Cake
   craftingTime: 25
+  difficulty: 6
   skillsUp:
   - skill: Cooking
     exp: 10
@@ -139,6 +140,7 @@
   id: RecipeBirthdayCake
   parent: BaseCakeRecipe
   result: FoodCakeBirthday
+  difficulty: 8
   ingredients:
     reagents:
       Cream: 5
@@ -159,6 +161,7 @@
   parent: BaseCakeRecipe
   result: FoodCakeBrain
   craftingTime: 75
+  difficulty: 8
   ingredients:
     items:
       FoodCakePlain: 1
@@ -205,6 +208,7 @@
   result: FoodCakeSuppermatter
   craftingTime: 150
   group: Cake
+  difficulty: 12
   ingredients:
     items:
       FoodCakeBatter: 2

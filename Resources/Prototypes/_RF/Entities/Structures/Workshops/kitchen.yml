@@ -24,7 +24,7 @@
       path: /Audio/_RF/Machines/Workshops/cooking_with_cover_01.ogg
   - type: SkillDifficulty
     difficulty:
-      Craft: 4
+      Craft: 0 # The difficulty is the one of the recipe
   - type: PointLight
     color: "#FC5F29"
     offset: "-0.5,0"

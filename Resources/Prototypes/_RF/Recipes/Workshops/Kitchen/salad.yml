@@ -18,6 +18,7 @@
   abstract: true
   parent: BaseKitchenRecipe
   group: Salad
+  difficulty: 2
 
 - type: workshopRecipe
   id: RecipeHerbSalad

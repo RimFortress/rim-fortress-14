@@ -15,6 +15,7 @@
   abstract: true
   parent: BaseKitchenRecipe
   group: Pasta
+  difficulty: 4
 
 - type: workshopRecipe
   id: RecipeBoiledSpaghetti

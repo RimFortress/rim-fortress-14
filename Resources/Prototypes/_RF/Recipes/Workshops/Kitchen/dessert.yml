@@ -28,6 +28,7 @@
   abstract: true
   parent: BaseKitchenRecipe
   group: Dessert
+  difficulty: 5
 
 - type: workshopRecipe
   id: BaseMuffinRecipe
@@ -35,6 +36,7 @@
   abstract: true
   craftingTime: 75
   group: Muffin
+  difficulty: 4
 
 - type: workshopRecipe
   id: RecipeRicePudding

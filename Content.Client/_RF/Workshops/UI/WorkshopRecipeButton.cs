@@ -3,18 +3,15 @@ using Content.Shared._RF.Workshops.Prototypes;
 using Content.Shared._RF.Workshops.Systems;
 using Content.Shared.Localizations;
 using Content.Client._RF.UserInterface.Controls;
-using Robust.Client.UserInterface;
-using Robust.Client.UserInterface.CustomControls;
 using Robust.Shared.Input;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Utility;
 
 namespace Content.Client._RF.Workshops.UI;
 
 public sealed partial class WorkshopRecipeButton : RfBoxContainer
 {
-    [Dependency] private IEntityManager _entity = default!;
-    [Dependency] private IPrototypeManager _proto = default!;
+    [Dependency] private IEntityManager _entity = null!;
+    [Dependency] private IPrototypeManager _proto = null!;
 
     private bool _infoBuilt;
 
@@ -38,6 +35,8 @@ public sealed partial class WorkshopRecipeButton : RfBoxContainer
         NameLabel.Text = result.Name;
         TimeLabel.Text = ContentLocalizationManager.FormatTimeShort(
             _entity.System<RimFortressWorldSystem>().ToWorldTime(proto.CraftingTime));
+        DifficultyLabel.Text = Loc.GetString("workshop-menu-recipe-difficulty",
+            ("difficulty", proto.Difficulty.ToString("0.##")));
         GroupMarker.Visible = false;
 
         Button.ToolTip = $"{result.Description}\n{Loc.GetString("workshop-menu-recipe-tooltip")}";
@@ -62,6 +61,7 @@ public sealed partial class WorkshopRecipeButton : RfBoxContainer
         Icon.SetPrototype(proto.IconEntity);
         NameLabel.Text = proto.Name;
         TimeLabel.Text = $"{count}";
+        DifficultyLabel.Visible = false;
     }
 
     private void BuildInfoBox(

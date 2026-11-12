@@ -52,6 +52,13 @@ public sealed partial class WorkshopRecipePrototype : IPrototype, IInheritingPro
     public TimeSpan CraftingTime = TimeSpan.FromSeconds(1);
 
     /// <summary>
+    /// How hard the recipe is to craft. The skill check of crafting counts its difficulty from this number,
+    /// see <see cref="Systems.WorkshopSystem.RecipeDifficultyVariable"/>.
+    /// </summary>
+    [DataField]
+    public float Difficulty;
+
+    /// <summary>
     /// Experience for what skills will the user gain after completing this recipe.
     /// </summary>
     [DataField]

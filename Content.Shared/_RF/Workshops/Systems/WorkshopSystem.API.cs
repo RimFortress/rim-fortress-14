@@ -117,6 +117,13 @@ public sealed partial class WorkshopSystem
            && GetUser(ent) == null;
 
     /// <summary>
+    /// The variables that the recipe gives to the formulas of the crafting skill check.
+    /// </summary>
+    [PublicAPI, Pure]
+    public static Dictionary<string, float> GetCraftVariables(WorkshopRecipePrototype proto)
+        => new() { [RecipeDifficultyVariable] = proto.Difficulty };
+
+    /// <summary>
     /// Starts crafting the first item in the workshop queue, if all the required items are available.
     /// </summary>
     /// <param name="ent">Workshop entity.</param>
@@ -132,7 +139,11 @@ public sealed partial class WorkshopSystem
             return false;
 
         GetIngredientsEntities(ent, proto, out var entities);
-        var delay = _skills.GetDelay(CraftQuery, user.Value, ent.Owner, proto.CraftingTime) * ent.Comp.CraftingTimeModifier;
+        var delay = _skills.GetDelay(CraftQuery,
+            user.Value,
+            ent.Owner,
+            proto.CraftingTime,
+            variables: GetCraftVariables(proto)) * ent.Comp.CraftingTimeModifier;
         var ev = new WorkshopCraftingDoAfterEvent
         {
             Recipe = proto,

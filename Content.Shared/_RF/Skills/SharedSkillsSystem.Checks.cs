@@ -27,6 +27,10 @@ public abstract partial class SharedSkillsSystem
     /// <param name="used">An entity that serves as an intermediary between the user and the targets, e.g. a tool.</param>
     /// <param name="targets">The targets of the action.</param>
     /// <param name="resolved">The chosen check with everything it needs to be calculated.</param>
+    /// <param name="variables">
+    /// More variables for the formulas of the check, e.g. the difficulty of a recipe. They do not replace the ones
+    /// of <see cref="SkillCheckVariables"/>.
+    /// </param>
     /// <returns>False if the user has no skill that performs a check for the query in these circumstances.</returns>
     /// <remarks>
     /// <para>
@@ -44,7 +48,8 @@ public abstract partial class SharedSkillsSystem
         Entity<SkillsComponent?> user,
         EntityUid? used,
         IReadOnlyList<EntityUid> targets,
-        [NotNullWhen(true)] out ResolvedSkillCheck? resolved)
+        [NotNullWhen(true)] out ResolvedSkillCheck? resolved,
+        IReadOnlyDictionary<string, float>? variables = null)
     {
         resolved = null;
 
@@ -101,7 +106,7 @@ public abstract partial class SharedSkillsSystem
             bestCheck,
             used,
             bestTargets,
-            GetCheckVariables(query, user, bestSkill, bestCheck, used, bestTargets));
+            GetCheckVariables(query, user, bestSkill, bestCheck, used, bestTargets, variables));
 
         return true;
     }
@@ -176,7 +181,8 @@ public abstract partial class SharedSkillsSystem
         ProtoId<SkillPrototype> skill,
         SkillCheckPrototype check,
         EntityUid? used,
-        IReadOnlyList<EntityUid> targets)
+        IReadOnlyList<EntityUid> targets,
+        IReadOnlyDictionary<string, float>? extra = null)
     {
         var targetDifficulty = 0f;
 
@@ -195,6 +201,14 @@ public abstract partial class SharedSkillsSystem
             [SkillCheckVariables.UsedDifficulty] = used != null ? GetDifficulty(query, used.Value) : 0f,
             [SkillCheckVariables.TargetDifficulty] = targetDifficulty,
         };
+
+        if (extra != null)
+        {
+            foreach (var (name, value) in extra)
+            {
+                variables.TryAdd(name, value);
+            }
+        }
 
         var difficulty = _mathCurves.Get(check.Difficulty, 0f, user, variables);
 
@@ -254,23 +268,22 @@ public abstract partial class SharedSkillsSystem
         Entity<SkillsComponent?> user,
         EntityUid? used,
         float delay,
-        EntityUid? target = null)
-    {
-        if (!TryResolveCheck(query, user, used, ToTargets(target), out var resolved))
-            return delay;
+        EntityUid? target = null,
+        IReadOnlyDictionary<string, float>? variables = null)
+        => TryResolveCheck(query, user, used, ToTargets(target), out var resolved, variables)
+            ? Math.Max(0f, _mathCurves.Get(resolved.Check.Delay, delay, user, resolved.Variables))
+            : delay;
 
-        return Math.Max(0f, _mathCurves.Get(resolved.Check.Delay, delay, user, resolved.Variables));
-    }
-
-    /// <inheritdoc cref="GetDelay(ProtoId{SkillQueryPrototype},Entity{SkillsComponent?},System.Nullable{EntityUid},float,System.Nullable{EntityUid})"/>
+    /// <inheritdoc cref="GetDelay(ProtoId{SkillQueryPrototype},Entity{SkillsComponent?},System.Nullable{EntityUid},float,System.Nullable{EntityUid},System.Collections.Generic.IReadOnlyDictionary{string,float})"/>
     [PublicAPI]
     public TimeSpan GetDelay(
         ProtoId<SkillQueryPrototype> query,
         Entity<SkillsComponent?> user,
         EntityUid? used,
         TimeSpan delay,
-        EntityUid? target = null)
-        => TimeSpan.FromSeconds(GetDelay(query, user, used, (float) delay.TotalSeconds, target));
+        EntityUid? target = null,
+        IReadOnlyDictionary<string, float>? variables = null)
+        => TimeSpan.FromSeconds(GetDelay(query, user, used, (float) delay.TotalSeconds, target, variables));
 
     /// <summary>
     /// Changes the result of an action, for example the damage of a hit or the spread of a shot,
@@ -290,9 +303,10 @@ public abstract partial class SharedSkillsSystem
         Entity<SkillsComponent?> user,
         EntityUid? used,
         float value,
-        EntityUid? target = null)
+        EntityUid? target = null,
+        IReadOnlyDictionary<string, float>? variables = null)
     {
-        if (!TryResolveCheck(query, user, used, ToTargets(target), out var resolved))
+        if (!TryResolveCheck(query, user, used, ToTargets(target), out var resolved, variables))
             return value;
 
         return _mathCurves.Get(resolved.Check.Result, value, user, resolved.Variables);
@@ -314,26 +328,28 @@ public abstract partial class SharedSkillsSystem
         ProtoId<SkillQueryPrototype> query,
         Entity<SkillsComponent?> user,
         EntityUid? used,
-        EntityUid? target = null)
-        => DoCheck(query, user, used, ToTargets(target));
+        EntityUid? target = null,
+        IReadOnlyDictionary<string, float>? variables = null)
+        => DoCheck(query, user, used, ToTargets(target), variables);
 
-    /// <inheritdoc cref="DoCheck(ProtoId{SkillQueryPrototype},Entity{SkillsComponent?},System.Nullable{EntityUid},System.Nullable{EntityUid})"/>
+    /// <inheritdoc cref="DoCheck(ProtoId{SkillQueryPrototype},Entity{SkillsComponent?},System.Nullable{EntityUid},System.Nullable{EntityUid},System.Collections.Generic.IReadOnlyDictionary{string,float})"/>
     /// <param name="targets">The targets of the action.</param>
     [PublicAPI]
     public SkillCheckResult DoCheck(
         ProtoId<SkillQueryPrototype> query,
         Entity<SkillsComponent?> user,
         EntityUid? used,
-        IReadOnlyList<EntityUid> targets)
+        IReadOnlyList<EntityUid> targets,
+        IReadOnlyDictionary<string, float>? variables = null)
     {
-        if (!TryResolveCheck(query, user, used, targets, out var resolved))
+        if (!TryResolveCheck(query, user, used, targets, out var resolved, variables))
             return SkillCheckResult.Success;
 
         var check = resolved.Check;
-        var variables = resolved.Variables;
+        var checkVariables = resolved.Variables;
 
-        var successChance = Math.Clamp(_mathCurves.Get(check.SuccessChance, 0f, user, variables), 0f, 1f);
-        var failChance = Math.Clamp(_mathCurves.Get(check.FailChance, 0f, user, variables), 0f, 1f);
+        var successChance = Math.Clamp(_mathCurves.Get(check.SuccessChance, 0f, user, checkVariables), 0f, 1f);
+        var failChance = Math.Clamp(_mathCurves.Get(check.FailChance, 0f, user, checkVariables), 0f, 1f);
 
         var result = Random.Prob(successChance)
             ? SkillCheckResult.AdditionalSuccess
@@ -348,7 +364,7 @@ public abstract partial class SharedSkillsSystem
         Log.Debug($"Skill check {resolved.Id} of the query {query}: {result}. " +
                   $"User: {ToPrettyString(user)}, used: {(used == null ? "none" : ToPrettyString(used.Value))}, " +
                   $"targets: {string.Join(", ", resolved.Targets.Select(x => ToPrettyString(x)))}, " +
-                  $"skill: {resolved.Skill}, delta: {variables[SkillCheckVariables.Delta]}");
+                  $"skill: {resolved.Skill}, delta: {checkVariables[SkillCheckVariables.Delta]}");
 #endif
 
         return result;

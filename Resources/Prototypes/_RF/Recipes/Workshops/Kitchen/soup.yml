@@ -31,6 +31,7 @@
   abstract: true
   parent: BaseKitchenRecipe
   group: Soup
+  difficulty: 3
 
 - type: workshopRecipe
   id: RecipeBisque

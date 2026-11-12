@@ -48,6 +48,11 @@ public sealed partial class WorkshopSystem : EntitySystem
 
     private static readonly ProtoId<SkillQueryPrototype> CraftQuery = "Craft";
 
+    /// <summary>
+    /// The variable of the formulas of the crafting skill check that is the difficulty of the recipe.
+    /// </summary>
+    public const string RecipeDifficultyVariable = "recipeDifficulty";
+
     public override void Initialize()
     {
         base.Initialize();
@@ -225,7 +230,7 @@ public sealed partial class WorkshopSystem : EntitySystem
 
         DeleteIngredients(ent.Comp, proto);
 
-        if (_skills.DoCheck(CraftQuery, user.Value, ent.Owner).IsFail)
+        if (!_skills.DoCheck(CraftQuery, user.Value, ent.Owner, variables: GetCraftVariables(proto)).IsFail)
         {
             SpawnResult(workshop, proto.Result);
             ent.Comp.CraftingDoAfter = null;
