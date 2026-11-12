@@ -1,0 +1,80 @@
+# Delay: each level above the difficulty of the medicine takes a fifth of a second off, but not below 0.15 of a second.
+- type: skillCheck
+  id: Healing
+  parent: BaseSkillCheck
+  difficulty:
+  - var: usedDifficulty
+  delay:
+  - minus:
+    - var: delta
+    - mul: [float: 0.2]
+  - clamp:
+      min: 0.15
+      max: 3600
+  experience:
+    Fail:
+    - var: difficulty
+    - mul: [float: 5]
+    Success:
+    - var: difficulty
+    - mul: [float: 10]
+    AdditionalSuccess:
+    - var: difficulty
+    - mul: [float: 20]
+  effects:
+    Target:
+      Fail:
+      - !type:ModifyBleed
+        probability: 0.6
+        amount: 4
+      - !type:HealthChange
+        probability: 0.9
+        damage:
+          types:
+            Heat: 3
+            Cold: 3
+            Shock: 3
+            Caustic: 1
+      AdditionalSuccess:
+      - !type:ModifyBleed
+        probability: 0.33
+        amount: -2
+      - !type:HealthChange
+        probability: 0.33
+        damage:
+          types:
+            Heat: -3
+            Cold: -3
+            Shock: -3
+            Caustic: -2
+      - !type:ChangeStack
+        probability: 0.33
+        amount: 1
+
+# Cloth is not made for bandaging, but bleeding is stopped with it too.
+- type: skillCheck
+  id: ClothBandage
+  parent: Healing
+  priority: 5
+  whitelist:
+    Used:
+      tags: [ClothMade]
+  effects:
+    Target:
+      Fail:
+      - !type:ModifyBleed
+        probability: 0.9
+        amount: 4
+      AdditionalSuccess:
+      - !type:ModifyBleed
+        probability: 0.33
+        amount: -4
+      - !type:HealthChange
+        probability: 0.33
+        damage:
+          types:
+            Slash: -2
+            Piercing: -2
+      - !type:ChangeStack
+        probability: 0.33
+        amount: 1

@@ -50,15 +50,6 @@
       path: /Audio/Weapons/Guns/MagIn/revolver_magin.ogg
   - type: StaticPrice
     price: 500
-  # RimFortress Start
-  - type: StockpileCategory
-    category: Gun
-  - type: SkillInteraction
-    skill: Gun
-    targetLevel: 8
-    experience: 25
-    resultFactor: 0.2
-  # RimFortress End
 
 - type: entity
   name: Deckard

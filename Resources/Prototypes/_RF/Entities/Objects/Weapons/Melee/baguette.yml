@@ -1,0 +1,7 @@
+- type: !PartialOnly entity
+  id: WeaponBaguette
+  components:
+  - type: Tag
+    tags:
+    - Bread
+    - Sword

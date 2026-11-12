@@ -68,15 +68,6 @@
   - type: Appearance
   - type: StaticPrice
     price: 500
-  # RimFortress Start
-  - type: StockpileCategory
-    category: Gun
-  - type: SkillInteraction
-    skill: Gun
-    targetLevel: 6
-    experience: 20
-    resultFactor: 0.2
-  # RimFortress End
 
 - type: entity
   name: viper

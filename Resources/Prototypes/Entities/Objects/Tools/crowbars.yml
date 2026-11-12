@@ -40,13 +40,6 @@
   - type: Item
     sprite: Objects/Tools/crowbar.rsi
     size: Small
-  # RimFortress Start
-  - type: StockpileCategory
-    category: Tool
-  - type: SkillInteraction
-    skill: Construction
-    targetLevel: 3
-  # RimFortress End
 
 # Standard (grey) Crowbar
 - type: entity

@@ -29,6 +29,11 @@ public abstract partial class SharedSkillsSystem
     /// <param name="resolved">The chosen check with everything it needs to be calculated.</param>
     /// <returns>False if the user has no skill that performs a check for the query in these circumstances.</returns>
     /// <remarks>
+    /// <para>
+    /// There is no check unless at least one of the participants (the user, the used entity or one of the targets)
+    /// lists the query in its <see cref="SkillDifficultyComponent"/>: an interaction that nobody has a difficulty
+    /// for is not a skill matter, e.g. hitting with a crowbar or with bare fists.
+    /// </para>
     /// The checks of all the skills of the user for the query whose whitelists and blacklists are met are compared by
     /// <see cref="SkillCheckPrototype.Priority"/> (the higher the better), then by their order in the list of the
     /// skill and then by the id of the skill.
@@ -43,7 +48,8 @@ public abstract partial class SharedSkillsSystem
     {
         resolved = null;
 
-        if (!Resolve(user, ref user.Comp, false))
+        if (!Resolve(user, ref user.Comp, false)
+            || !AnyHasDifficulty(query, user, used, targets))
             return false;
 
         ProtoId<SkillPrototype> bestSkill = default;
@@ -197,6 +203,27 @@ public abstract partial class SharedSkillsSystem
 
         return variables;
     }
+
+    private bool AnyHasDifficulty(
+        ProtoId<SkillQueryPrototype> query,
+        EntityUid user,
+        EntityUid? used,
+        IReadOnlyList<EntityUid> targets)
+    {
+        if (HasDifficulty(query, user) || used != null && HasDifficulty(query, used.Value))
+            return true;
+
+        foreach (var target in targets)
+        {
+            if (HasDifficulty(query, target))
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool HasDifficulty(ProtoId<SkillQueryPrototype> query, EntityUid uid)
+        => TryComp<SkillDifficultyComponent>(uid, out var comp) && comp.Difficulty.ContainsKey(query);
 
     private float GetDifficulty(ProtoId<SkillQueryPrototype> query, EntityUid uid)
     {

@@ -12,7 +12,8 @@ namespace Content.Shared._RF.Skills.Components;
 public sealed partial class SkillDifficultyComponent : Component
 {
     /// <summary>
-    /// The difficulty for each query. The queries that are not listed count as 0.
+    /// The difficulty for each query. The queries that are not listed count as 0, and an interaction in which
+    /// none of the participants lists the query is not a skill check at all.
     /// </summary>
     [DataField]
     public Dictionary<ProtoId<SkillQueryPrototype>, float> Difficulty = new();

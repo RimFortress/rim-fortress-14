@@ -1,0 +1,8 @@
+- type: !PartialOnly entity
+  id: BaseWeaponSniper
+  components:
+  - type: StockpileCategory
+    category: Gun
+  - type: SkillDifficulty
+    difficulty:
+      ShootGun: 12

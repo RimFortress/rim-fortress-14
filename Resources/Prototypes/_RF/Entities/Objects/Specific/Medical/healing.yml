@@ -1,0 +1,8 @@
+- type: !PartialOnly entity
+  id: BaseHealingItem
+  components:
+  - type: StockpileCategory
+    category: Medical
+  - type: SkillDifficulty
+    difficulty:
+      Heal: 5

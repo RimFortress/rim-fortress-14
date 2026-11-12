@@ -7,28 +7,9 @@
 - type: !PartialOnly entity
   id: MaterialCloth
   components:
-  - type: SkillInteraction
-    skill: Healing
-    targetLevel: 3
-    experience: 40
-    resultFactor: 0.2
-    failTargetEffects:
-    - !type:ModifyBleed
-      probability: 0.9
-      amount: 4
-    successTargetEffects:
-    - !type:ModifyBleed
-      probability: 0.33
-      amount: -4
-    - !type:HealthChange
-      probability: 0.33
-      damage:
-        types:
-          Slash: -2
-          Piercing: -2
-    - !type:ChangeStack
-      probability: 0.33
-      amount: 1
+  - type: SkillDifficulty
+    difficulty:
+      Heal: 3
 
 - type: !PartialOnly entity
   id: MaterialCloth10

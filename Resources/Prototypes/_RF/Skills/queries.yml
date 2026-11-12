@@ -20,3 +20,11 @@
 # An agent firing a gun at a target.
 - type: skillQuery
   id: ShootGun
+
+# Treating a patient.
+- type: skillQuery
+  id: Heal
+
+# Tending or harvesting a plant.
+- type: skillQuery
+  id: Harvest

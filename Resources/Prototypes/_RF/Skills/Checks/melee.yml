@@ -1,0 +1,181 @@
+# Delay: the attack rate (attacks per second) grows by 0.02 for each level above the difficulty of the weapon.
+# Result: the damage grows by 10% for each level above and falls by as much for each level below, but not below 10%.
+- type: skillCheck
+  id: MeleeStrikeBase
+  parent: BaseSkillCheck
+  abstract: true
+  difficulty:
+  - var: usedDifficulty
+  delay:
+  - add:
+    - var: delta
+    - mul: [float: 0.02]
+  - clamp:
+      min: 0.1
+      max: 100
+  result:
+  - add:
+    - var: delta
+    - mul: [float: 0.1]
+  - clamp:
+      min: 0.1
+      max: 10
+  experience:
+    Fail:
+    - var: difficulty
+    - mul: [float: 1.25]
+    Success:
+    - var: difficulty
+    - mul: [float: 2.5]
+    AdditionalSuccess:
+    - var: difficulty
+    - mul: [float: 5]
+
+# Any hit of a weapon that has its difficulty, if there is no better check for it.
+# With a good hit the weapon is ready to hit again at once, with a bad one the user hurts themselves.
+- type: skillCheck
+  id: MeleeStrike
+  parent: MeleeStrikeBase
+  effects:
+    Used:
+      AdditionalSuccess:
+      - !type:ResetMeleeCooldown
+        probability: 0.5
+    User:
+      Fail:
+      - !type:SelfAttack
+        probability: 0.1
+
+# Knives are quicker and more treacherous.
+- type: skillCheck
+  id: KnifeStrike
+  parent: MeleeStrikeBase
+  priority: 5
+  whitelist:
+    Used:
+      tags: [Knife]
+  delay:
+  - add:
+    - var: delta
+    - mul: [float: 0.01]
+  - clamp:
+      min: 0.1
+      max: 100
+  effects:
+    Used:
+      AdditionalSuccess:
+      - !type:ResetMeleeCooldown
+        probability: 0.6
+    User:
+      Fail:
+      - !type:SelfAttack
+        probability: 0.3
+
+# Swords are as quick and as treacherous as knives.
+- type: skillCheck
+  id: SwordStrike
+  parent: MeleeStrikeBase
+  priority: 5
+  whitelist:
+    Used:
+      tags: [Sword]
+  delay:
+  - add:
+    - var: delta
+    - mul: [float: 0.01]
+  - clamp:
+      min: 0.1
+      max: 100
+  effects:
+    Used:
+      AdditionalSuccess:
+      - !type:ResetMeleeCooldown
+        probability: 0.6
+    User:
+      Fail:
+      - !type:SelfAttack
+        probability: 0.3
+
+# Making the enemy feel the power of Thor.
+- type: skillCheck
+  id: MjollnirStrike
+  parent: MeleeStrikeBase
+  priority: 5
+  whitelist:
+    Used:
+      tags: [Mjollnir]
+  delay:
+  - add:
+    - var: delta
+    - mul: [float: 0.03]
+  - clamp:
+      min: 0.1
+      max: 100
+  effects:
+    Used:
+      AdditionalSuccess:
+      - !type:ResetMeleeCooldown
+        probability: 0.25
+    User:
+      Fail:
+      - !type:SelfAttack
+        probability: 0.1
+    Target:
+      AdditionalSuccess:
+      - !type:Electrocute
+        probability: 0.5
+
+# A pickaxe on what can be dug. The damage grows slowly: skilled miners are not to destroy everything and everyone
+# with their pickaxes.
+- type: skillCheck
+  id: MiningStrike
+  parent: MeleeStrikeBase
+  priority: 10
+  whitelist:
+    Used:
+      tags: [Pickaxe]
+    Target:
+      tags: [Diggable]
+  delay:
+  - add:
+    - var: delta
+    - mul: [float: 0.01]
+  - clamp:
+      min: 0.1
+      max: 100
+  result:
+  - add:
+    - var: delta
+    - mul: [float: 0.02]
+  - clamp:
+      min: 0.1
+      max: 10
+  effects:
+    Used:
+      AdditionalSuccess:
+      - !type:ResetMeleeCooldown
+        probability: 0.8
+    User:
+      Fail:
+      - !type:SelfAttack
+        probability: 0.3
+
+# An axe on a tree.
+- type: skillCheck
+  id: WoodcuttingStrike
+  parent: MeleeStrikeBase
+  priority: 10
+  whitelist:
+    Used:
+      tags: [FireAxe]
+    Target:
+      tags: [Tree]
+  effects:
+    Used:
+      AdditionalSuccess:
+      - !type:ResetMeleeCooldown
+        probability: 0.5
+    User:
+      Fail:
+      - !type:SelfAttack
+        probability: 0.03

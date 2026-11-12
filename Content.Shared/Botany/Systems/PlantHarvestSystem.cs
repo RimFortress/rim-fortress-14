@@ -6,6 +6,12 @@ using Content.Shared.Database;
 using Content.Shared.Interaction;
 using Content.Shared.Popups;
 
+// RimFortress Start
+using Content.Shared._RF.Skills;
+using Content.Shared._RF.Skills.Prototypes;
+using Robust.Shared.Prototypes;
+// RimFortress End
+
 namespace Content.Shared.Botany.Systems;
 
 /// <summary>
@@ -20,11 +26,14 @@ public sealed partial class PlantHarvestSystem : EntitySystem
     [Dependency] private SharedPopupSystem _popup = default!;
     [Dependency] private PlantHolderSystem _plantHolder = default!;
     [Dependency] private PlantTraySystem _plantTray = default!;
+    [Dependency] private SharedSkillsSystem _skills = default!; // RimFortress
 
     [Dependency] private EntityQuery<PlantHolderComponent> _holderQuery = default!;
     [Dependency] private EntityQuery<PlantHarvestComponent> _harvestQuery = default!;
     [Dependency] private EntityQuery<PlantComponent> _plantQuery = default!;
     [Dependency] private EntityQuery<PlantDataComponent> _dataQuery = default!;
+
+    private static readonly ProtoId<SkillQueryPrototype> HarvestQuery = "Harvest"; // RimFortress
 
     [SubscribeLocalEvent]
     private void OnInteractHand(Entity<PlantTrayComponent> ent, ref InteractHandEvent args)
@@ -113,6 +122,17 @@ public sealed partial class PlantHarvestSystem : EntitySystem
     [PublicAPI]
     public void TryHandleHarvest(EntityUid plant, EntityUid user)
     {
+        // RimFortress Start
+        // The plant is harvested from a tray, the difficulty is the one of the tray
+        var targets = new List<EntityUid> { plant };
+
+        if (Transform(plant).ParentUid is { Valid: true } tray && HasComp<PlantTrayComponent>(tray))
+            targets.Add(tray);
+
+        if (_skills.DoCheck(HarvestQuery, user, null, targets).IsFail)
+            return;
+        // RimFortress End
+
         if (_dataQuery.TryComp(plant, out var plantData) && plantData.HarvestLogImpact != null)
             _adminLogger.Add(LogType.Botany, plantData.HarvestLogImpact.Value, $"Auto-harvested {Loc.GetString(plantData.Name):seed} at Pos:{Transform(plant).Coordinates}.");
 

@@ -3,27 +3,27 @@
   components:
   - type: StockpileCategory
     category: Tool
-  - type: SkillInteraction
-    skill: Construction
-    targetLevel: 5
+  - type: SkillDifficulty
+    difficulty:
+      UseTool: 5
 
 - type: !PartialOnly entity
   id: Screwdriver
   components:
   - type: StockpileCategory
     category: Tool
-  - type: SkillInteraction
-    skill: Construction
-    targetLevel: 5
+  - type: SkillDifficulty
+    difficulty:
+      UseTool: 5
 
 - type: !PartialOnly entity
   id: Wrench
   components:
   - type: StockpileCategory
     category: Tool
-  - type: SkillInteraction
-    skill: Construction
-    targetLevel: 5
+  - type: SkillDifficulty
+    difficulty:
+      UseTool: 5
 
 - type: !PartialOnly entity
   id: Multitool
@@ -42,9 +42,9 @@
   components:
   - type: StockpileCategory
     category: Tool
-  - type: SkillInteraction
-    skill: Construction
-    targetLevel: 5
+  - type: SkillDifficulty
+    difficulty:
+      UseTool: 5
 
 - type: !PartialOnly entity
   id: RCD
@@ -63,9 +63,9 @@
   components:
   - type: StockpileCategory
     category: Tool
-  - type: SkillInteraction
-    skill: Construction
-    targetLevel: 5
+  - type: SkillDifficulty
+    difficulty:
+      UseTool: 5
 
 - type: !PartialOnly entity
   id: Shovel

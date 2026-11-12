@@ -23,6 +23,10 @@
   profession: skill-healing-profession
   icon: Interface/VerbIcons/plus.svg.192dpi.png
   color: "#00FA68"
+  checks:
+    Heal:
+    - ClothBandage
+    - Healing
 
 - type: skill
   id: Construction
@@ -31,6 +35,12 @@
   profession: skill-construction-profession
   icon: _RF/Interface/hammer-solid.svg.192dpi.png
   color: "#C5AC3E"
+  checks:
+    UseTool:
+    - WelderUse
+    - ToolUse
+    Construct:
+    - ConstructionStep
 
 - type: skill
   id: Mining
@@ -39,6 +49,9 @@
   profession: skill-mining-profession
   icon: _RF/Interface/VerbIcons/person-digging-solid.svg.192dpi.png
   color: "#FF8C00"
+  checks:
+    MeleeAttack:
+    - MiningStrike
 
 - type: skill
   id: Melee
@@ -47,6 +60,12 @@
   profession: skill-melee-profession
   icon: _RF/Interface/VerbIcons/hand-fist-solid-full.svg.192dpi.png
   color: "#C74848"
+  checks:
+    MeleeAttack:
+    - KnifeStrike
+    - SwordStrike
+    - MjollnirStrike
+    - MeleeStrike
 
 - type: skill
   id: Gun
@@ -55,6 +74,9 @@
   profession: skill-gun-profession
   icon: _RF/Interface/VerbIcons/hand-fist-solid-full.svg.192dpi.png
   color: "#C74848"
+  checks:
+    ShootGun:
+    - GunShot
 
 - type: skill
   id: Farming
@@ -63,6 +85,9 @@
   profession: skill-farming-profession
   icon: _RF/Interface/VerbIcons/seedling-solid.svg.192dpi.png
   color: "#228B22"
+  checks:
+    Harvest:
+    - Farming
 
 - type: skill
   id: Woodcutting
@@ -71,6 +96,9 @@
   profession: skill-woodcutting-profession
   icon: _RF/Interface/VerbIcons/tree-solid.svg.192dpi.png
   color: "#A0522D"
+  checks:
+    MeleeAttack:
+    - WoodcuttingStrike
 
 - type: skill
   id: Cooking
@@ -79,3 +107,6 @@
   profession: skill-cooking-profession
   icon: _RF/Interface/VerbIcons/utensils-solid-full.svg.192dpi.png
   color: "#9D6280"
+  checks:
+    Craft:
+    - Cooking

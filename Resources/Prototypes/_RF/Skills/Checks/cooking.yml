@@ -1,0 +1,21 @@
+# Delay: each level above the difficulty of the workshop takes two seconds off the crafting, but not below 0.15.
+# A spoilt dish gives no experience.
+- type: skillCheck
+  id: Cooking
+  parent: BaseSkillCheck
+  difficulty:
+  - var: usedDifficulty
+  delay:
+  - minus:
+    - var: delta
+    - mul: [float: 2]
+  - clamp:
+      min: 0.15
+      max: 3600
+  experience:
+    Success:
+    - var: difficulty
+    - mul: [float: 2.5]
+    AdditionalSuccess:
+    - var: difficulty
+    - mul: [float: 5]

@@ -1,0 +1,67 @@
+# Delay: each level above the difficulty of the tool takes a fifth of a second off, but not below 0.15 of a second.
+- type: skillCheck
+  id: ToolUse
+  parent: BaseSkillCheck
+  difficulty:
+  - var: usedDifficulty
+  delay:
+  - minus:
+    - var: delta
+    - mul: [float: 0.2]
+  - clamp:
+      min: 0.15
+      max: 3600
+
+# A welder can give a bit of its fuel back.
+- type: skillCheck
+  id: WelderUse
+  parent: ToolUse
+  priority: 5
+  whitelist:
+    Used:
+      components: [Welder]
+  effects:
+    Used:
+      AdditionalSuccess:
+      - !type:AdjustReagent
+        reagent: WeldingFuel
+        amount: 10
+
+# A step of a construction, its difficulty is the one of the construction.
+- type: skillCheck
+  id: ConstructionStep
+  parent: BaseSkillCheck
+  difficulty:
+  - var: targetDifficulty
+  delay:
+  - minus:
+      var: delta
+      mul: [float: 0.2]
+  - clamp:
+      min: 0.15
+      max: 3600
+  experience:
+    Fail:
+    - var: difficulty
+    - mul: [float: 2]
+    Success:
+    - var: difficulty
+    - mul: [float: 4]
+    AdditionalSuccess:
+    - var: difficulty
+    - mul: [float: 8]
+  effects:
+    Target:
+      # With a small chance we can recover the amount of material,
+      # perhaps even more than was spent.
+      # It definitely can't be abused to clone materials, right?
+      AdditionalSuccess:
+      - !type:ChangeStack
+        probability: 0.33
+        amount: 10
+      Fail:
+      - !type:HealthChange
+        probability: 0.9
+        damage:
+          types:
+            Structural: 20
